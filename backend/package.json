@@ -1,0 +1,21 @@
+{
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^2.0.1",
+    "mysql2": "^3.14.1",
+    "nodemailer": "^7.0.3",
+    "pdf-lib": "^1.17.1",
+    "pdf-poppler": "^0.2.1",
+    "react-hot-toast": "^2.5.2",
+    "sequelize": "^6.37.7",
+    "sharp": "^0.34.2",
+    "sqlite3": "^5.1.7",
+    "uuid": "^11.1.0",
+    "validator": "^13.15.15"
+  }
+}
