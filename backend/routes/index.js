@@ -7,6 +7,7 @@ const templateRoutes = require("./templates");
 const signature = require("./signature");
 const logsTemplatesRoutes = require("./logsTemplates");
 const analysesRoutes = require("./analyses");
+const publicRoutes = require("./public");
 
 const router = express.Router();
 
@@ -18,5 +19,6 @@ router.use("/templates", templateRoutes);
 router.use("/signature", signature);
 router.use("/logs", logsTemplatesRoutes);
 router.use("/analyses", analysesRoutes);
+router.use("/public", publicRoutes);
 
 module.exports = router;
