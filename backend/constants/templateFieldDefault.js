@@ -1,0 +1,18 @@
+module.exports.FIELD_DEFAULT = {
+  bold: false,
+  color: "#000000",
+  demo: "",
+  fixed: false,
+  font: "Arial",
+  fontSize: 16,
+  id: null,
+  imageUrl: "",
+  italic: false,
+  label: "",
+  render: true,
+  size: 100,
+  type: "text",
+  underline: false,
+  x: 0,
+  y: 0,
+};
