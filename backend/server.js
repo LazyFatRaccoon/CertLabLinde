@@ -10,27 +10,40 @@ const cookieParser = require("cookie-parser");
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+/* 🔹 1. CORS: різні origin у dev і prod */
+const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:3000"; // задаємо в .env.dev
 app.use(
   cors({
-    origin: "http://localhost:3000", // де крутиться ваша React-апка
-    credentials: true, // <-- дозволяємо cookies / auth-заголовки
+    origin: CLIENT_URL,
+    credentials: true,
   })
 );
+
+/* 🔹 2. Мідлвари */
 app.use(express.json());
 app.use(cookieParser());
 
-// Статичні файли
+/* 🔹 3. Статика, що НЕ належить React-білду */
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/public", express.static(path.join(__dirname, "public")));
 
-// Основні маршрути
+/* 🔹 4. API */
 app.use("/api", routes);
 
-// Ініціалізація БД та запуск сервера
+/* 🔹 5. React build (лише в production) */
+if (process.env.NODE_ENV === "production") {
+  app.use(express.static(path.join(__dirname, "..", "frontend", "build")));
+  app.get("*", (_, res) =>
+    res.sendFile(path.join(__dirname, "..", "frontend", "build", "index.html"))
+  );
+}
+
+/* 🔹 6. Ініціалізація БД та сервер */
 (async () => {
   try {
     await db.sequelize.sync();
 
+    // створюємо admin, якщо потрібен
     const userCount = await db.User.count();
     if (userCount === 0) {
       const hashedPassword = await bcrypt.hash("admin", 10);
@@ -44,14 +57,8 @@ app.use("/api", routes);
       console.log("Default supervisor created");
     }
 
-    console.log("Database synced");
-    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-    console.log("EMAIL_USER:", process.env.EMAIL_USER);
-    console.log(
-      "EMAIL_PASS:",
-      process.env.EMAIL_PASS ? "✓ loaded" : "✗ missing"
-    );
-  } catch (error) {
-    console.error("Unable to connect to the database:", error);
+    app.listen(PORT, () => console.log(`🌐 Server running on ${PORT}`));
+  } catch (err) {
+    console.error("Unable to connect to DB:", err);
   }
 })();

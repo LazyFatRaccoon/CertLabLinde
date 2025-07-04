@@ -20,8 +20,6 @@
     "validator": "^13.15.15"
   },
   "scripts": {
-    "dev": "nodemon src/index.js",
-    "start": "node src/index.js",
-    "build": "echo \"(не потребує build)\""
+    "start": "node server.js"
   }
 }
