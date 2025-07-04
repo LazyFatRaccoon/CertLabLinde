@@ -1,0 +1,20 @@
+{
+  "name": "certlablinde",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm:dev-back\" \"npm:start-front\"",
+    "build": "npm run build -w backend && npm run build -w frontend",
+    "start": "npm run start -w backend",
+    "test": "npm test --workspaces",
+    "dev-back": "npm run dev -w backend",
+    "start-front": "npm start -w frontend"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  }
+}
