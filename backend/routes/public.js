@@ -10,6 +10,17 @@ const pdfLib = require("pdf-lib");
 const { Analysis, Template, User } = require("../models");
 const { loadFonts } = require("../utils/fontLoader");
 
+const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, "..");
+
+function toDDMMYYYY(raw) {
+  if (/^\d{2}\.\d{2}\.\d{4}$/.test(raw)) return raw; // вже у DD.MM.YYYY
+  const d = new Date(raw);
+  const day = String(d.getDate()).padStart(2, "0");
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const year = d.getFullYear();
+  return `${day}.${month}.${year}`;
+}
+
 //--------------------------------------------------------------------
 // POST  /api/public/certificates
 // body = { product, date:"DD.MM.YYYY", batch }
@@ -52,8 +63,8 @@ router.post("/certificates", async (req, res) => {
       console.log(date);
       if (
         d[FIELD_ID["Продукт"]] === product &&
-        d[FIELD_ID["Партія"]] === batch &&
-        d[FIELD_ID["Дата проведення аналізу"]] === date
+        d[FIELD_ID["Партія"]] === String(batch) &&
+        toDDMMYYYY(d[FIELD_ID["Дата проведення аналізу"]]) === toDDMMYYYY(date)
       ) {
         analysis = a;
         break; // цього досить ⇒ виходимо
@@ -71,8 +82,11 @@ router.post("/certificates", async (req, res) => {
     // 2️⃣  відкриваємо PDF-бекграунд
     //----------------------------------------------------------------
     const tpl = analysis.template;
-    const bgRel = tpl.bgFile.replace("/public/", "public/");
-    const bgAbs = path.join(__dirname, "..", bgRel);
+    //const bgRel = tpl.bgFile.replace("/public/", "public/");
+    const bgAbs = path.join(
+      DATA_DIR,
+      tpl.bgFile.replace("/public/", "public/")
+    );
 
     const pdfDoc = await pdfLib.PDFDocument.load(await fs.readFile(bgAbs));
     const fonts = await loadFonts(pdfDoc); // { regular,bold,italic,boldItalic,black }
@@ -148,19 +162,14 @@ router.post("/certificates", async (req, res) => {
     const signField = tpl.fields.find((f) => f.label === "Підпис");
 
     if (stampField) {
-      const stampP = path.join(__dirname, "..", "public", "stamp.png");
+      const stampP = path.join(DATA_DIR, "public", "stamp.png");
       try {
         await fs.access(stampP);
         await addPng(stampP, stampField.size, stampField.x, stampField.y);
       } catch {}
     }
     if (signField && analysis.author?.signature) {
-      const signP = path.join(
-        __dirname,
-        "..",
-        "public",
-        analysis.author.signature
-      );
+      const signP = path.join(DATA_DIR, "public", analysis.author.signature);
       try {
         await fs.access(signP);
         await addPng(signP, signField.size, signField.x, signField.y);
