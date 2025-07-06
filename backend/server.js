@@ -9,6 +9,13 @@ const cookieParser = require("cookie-parser");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const DATA_DIR = process.env.DATA_DIR || __dirname;
+
+const fs = require("fs");
+["uploads", "public"].forEach((dir) => {
+  const full = path.join(DATA_DIR, dir);
+  if (!fs.existsSync(full)) fs.mkdirSync(full, { recursive: true });
+});
 
 /* 🔹 1. CORS: різні origin у dev і prod */
 const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:3000"; // задаємо в .env.dev
@@ -24,8 +31,8 @@ app.use(express.json());
 app.use(cookieParser());
 
 /* 🔹 3. Статика, що НЕ належить React-білду */
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-app.use("/public", express.static(path.join(__dirname, "public")));
+app.use("/uploads", express.static(path.join(DATA_DIR, "uploads")));
+app.use("/public", express.static(path.join(DATA_DIR, "public")));
 
 /* 🔹 4. API */
 app.use("/api", routes);
