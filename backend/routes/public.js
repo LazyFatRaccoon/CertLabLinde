@@ -44,6 +44,12 @@ router.post("/certificates", async (req, res) => {
       a.template.fields.forEach((f) => (FIELD_ID[f.label] = f.id));
 
       const d = a.data || {};
+      console.log(d[FIELD_ID["Продукт"]]);
+      console.log(product);
+      console.log(d[FIELD_ID["Партія"]]);
+      console.log(batch);
+      console.log(d[FIELD_ID["Дата проведення аналізу"]]);
+      console.log(date);
       if (
         d[FIELD_ID["Продукт"]] === product &&
         d[FIELD_ID["Партія"]] === batch &&
