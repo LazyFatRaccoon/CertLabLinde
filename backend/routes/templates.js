@@ -51,7 +51,11 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 /* ---------- helper: save bg & return meta ---------- */
 async function saveBg(id, file) {
-  const dir = path.join(__dirname, "..", "public", "templates");
+  const dir = path.join(
+    process.env.DATA_DIR || path.join(__dirname, ".."),
+    "public",
+    "templates"
+  );
   fs.mkdirSync(dir, { recursive: true });
 
   // PNG / JPEG -----------------------------------------------------------
