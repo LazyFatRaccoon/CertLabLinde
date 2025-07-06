@@ -1,16 +1,15 @@
 import React, { useEffect, useState } from "react";
 import FileUploader from "../users/FileUploader";
+import { API_URL, PUBLIC_URL } from "../../constants";
 
 export default function StampUploader() {
   const [initialUrl, setInitialUrl] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
-    fetch("http://localhost:5000/public/stamp.png", { method: "HEAD" }).then(
-      (r) => {
-        if (r.ok) setInitialUrl("http://localhost:5000/public/stamp.png");
-      }
-    );
+    fetch(`${PUBLIC_URL}/public/stamp.png`, { method: "HEAD" }).then((r) => {
+      if (r.ok) setInitialUrl(`${PUBLIC_URL}/public/stamp.png`);
+    });
   }, []);
 
   const handleChange = async (file) => {
@@ -20,13 +19,13 @@ export default function StampUploader() {
     fd.append("stamp", file);
 
     try {
-      const res = await fetch("http://localhost:5000/api/stamp/upload-stamp", {
+      const res = await fetch(`${API_URL}/stamp/upload-stamp`, {
         method: "POST",
         body: fd,
       });
       if (!res.ok) throw new Error("Bad response");
       await res.json();
-      setInitialUrl(`http://localhost:5000/public/stamp.png?t=${Date.now()}`);
+      setInitialUrl(`${PUBLIC_URL}/public/stamp.png?t=${Date.now()}`);
       setRefreshKey((k) => k + 1);
     } catch (err) {
       console.error("Помилка завантаження печатки", err);

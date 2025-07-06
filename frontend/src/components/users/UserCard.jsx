@@ -121,7 +121,9 @@ export default function UserCard({ user, onSave, onDelete }) {
             accept={["image/png"]}
             initialUrl={
               user.signature
-                ? `http://localhost:5000/public/${user.signature}`
+                ? `${
+                    process.env.REACT_APP_API_URL?.replace(/\/api$/, "") || ""
+                  }/public/${user.signature}`
                 : ""
             }
             onChange={(f) => {

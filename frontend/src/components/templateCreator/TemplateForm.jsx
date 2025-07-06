@@ -3,6 +3,7 @@ import FileUploader from "../users/FileUploader";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { api } from "../../api/axiosInstance";
+import { PUBLIC_URL } from "../../constants";
 
 import FieldTable from "./FieldTable"; // див. нижче
 //import Canvas from "./TemplateCanvas"; // поле з бекграундом
@@ -92,16 +93,17 @@ export default function TemplateForm({ draft, setDraft, onSave, onDelete }) {
   const width = 600;
   const height = width * 1.414;
 
-  const stampUrl = "http://localhost:5000/public/stamp.png"; // перевіряти HEAD не обов’язково
-  const signUrl =
-    currentUser?.signature &&
-    `http://localhost:5000/public/${currentUser.signature}`;
+  const stampUrl = `${PUBLIC_URL}/public/stamp.png`; // перевіряти HEAD не обов’язково
+  const signUrl = currentUser?.signature
+    ? `${PUBLIC_URL}/public/${currentUser.signature}`
+    : "";
 
   const overlayFields = draft.fields
     .filter((f) => f.render !== false)
     .map((f) => {
-      if (f.label === "Печатка") return { ...f, imageUrl: stampUrl };
-      if (f.label === "Підпис") return { ...f, imageUrl: signUrl };
+      if (f.label === "Печатка" && stampUrl)
+        return { ...f, imageUrl: stampUrl };
+      if (f.label === "Підпис" && signUrl) return { ...f, imageUrl: signUrl };
 
       return f;
     });
@@ -148,7 +150,7 @@ export default function TemplateForm({ draft, setDraft, onSave, onDelete }) {
         previewWidth={width}
         previewHeight={height}
         removable={false}
-        initialUrl={draft.bgFile ? `http://localhost:5000${draft.bgFile}` : ""}
+        initialUrl={draft.bgFile ? `${PUBLIC_URL}${draft.bgFile}` : ""}
         verticalFlex={true}
         onChange={(file) => {
           if (file) {

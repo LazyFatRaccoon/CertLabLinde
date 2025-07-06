@@ -7,7 +7,7 @@ import {
   getFilteredRowModel,
   flexRender,
 } from "@tanstack/react-table";
-import axios from "axios";
+import { api } from "../../api/axiosInstance";
 
 export default function UserLogs() {
   const [logs, setLogs] = useState([]);
@@ -20,11 +20,7 @@ export default function UserLogs() {
 
   /* fetch */
   useEffect(() => {
-    axios
-      .get("http://localhost:5000/api/logs/users", {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      .then((r) => setLogs(r.data));
+    api.get("/logs/users").then((r) => setLogs(r.data));
   }, [token]);
 
   /* transform */

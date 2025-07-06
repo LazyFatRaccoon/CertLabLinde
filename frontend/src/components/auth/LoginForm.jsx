@@ -3,6 +3,7 @@ import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
 import { tokenStore } from "../../api/tokenSore";
+import { API_URL } from "../../constants";
 
 export default function LoginForm({ onLogin }) {
   const [email, setEmail] = useState("");
@@ -31,7 +32,7 @@ export default function LoginForm({ onLogin }) {
 
     try {
       const { data } = await axios.post(
-        "http://localhost:5000/api/auth/login",
+        `${API_URL}/auth/login`,
         { email, password },
         { withCredentials: true } // щоб отримати cookie з refresh-токеном
       );

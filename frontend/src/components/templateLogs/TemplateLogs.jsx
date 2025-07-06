@@ -7,7 +7,7 @@ import {
   getFilteredRowModel,
   flexRender,
 } from "@tanstack/react-table";
-import axios from "axios";
+import { api } from "../../api/axiosInstance";
 
 export default function TemplateLogs() {
   const [logs, setLogs] = useState([]);
@@ -16,10 +16,8 @@ export default function TemplateLogs() {
 
   /* ─── fetch ─── */
   useEffect(() => {
-    axios
-      .get("http://localhost:5000/api/logs/templates", {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+    api
+      .get("/logs/templates")
       .then((r) => setLogs(r.data))
       .catch((e) => console.error("Failed to fetch template logs", e));
   }, [token]);

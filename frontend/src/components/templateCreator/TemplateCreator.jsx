@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { v4 as uuidv4 } from "uuid";
+import { API_URL, PUBLIC_URL } from "../../constants";
 
 export default function TemplateCreator() {
   const [templateName, setTemplateName] = useState("");
@@ -36,15 +37,12 @@ export default function TemplateCreator() {
       const formData = new FormData();
       formData.append("file", file);
 
-      const res = await fetch(
-        "http://localhost:5000/api/templates/upload-template",
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
+      const res = await fetch(`${API_URL}/templates/upload-template`, {
+        method: "POST",
+        body: formData,
+      });
       const data = await res.json();
-      setImagePreview(`http://localhost:5000${data.imageUrl}`);
+      setImagePreview(`${PUBLIC_URL}${data.imageUrl}`);
       setImageFile(
         new File([file], data.imageUrl.split("/").pop(), { type: file.type })
       );
@@ -98,7 +96,7 @@ export default function TemplateCreator() {
     formData.append("templateName", templateName);
     formData.append("fields", JSON.stringify(fields));
 
-    await fetch("http://localhost:5000/api/templates", {
+    await fetch(`${API_URL}/templates`, {
       method: "POST",
       body: formData,
     });
@@ -162,7 +160,7 @@ export default function TemplateCreator() {
           {renderTestFields()}
           {stampCoords && (
             <img
-              src="http://localhost:5000/stamp.png"
+              src={`${PUBLIC_URL}/stamp.png`}
               alt="Печатка"
               className="absolute"
               style={{

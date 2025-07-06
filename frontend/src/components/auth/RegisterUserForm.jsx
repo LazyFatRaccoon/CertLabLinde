@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
+import { API_URL } from "../../constants";
 
 const availableRoles = ["lab", "constructor", "supervisor", "manager"];
 
@@ -29,16 +30,12 @@ export default function RegisterUserForm() {
       if (signature) formData.append("signature", signature);
       if (stamp) formData.append("stamp", stamp);
 
-      const res = await axios.post(
-        "http://localhost:5000/api/register",
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
+      const res = await axios.post(`${API_URL}/register`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      });
 
       setMessage(res.data.message);
       setError("");

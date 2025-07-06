@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
+import { API_URL } from "../../constants";
 
 export default function ChangePasswordForm() {
   const [oldPassword, setOldPassword] = useState("");
@@ -12,7 +13,7 @@ export default function ChangePasswordForm() {
     try {
       const token = localStorage.getItem("token");
       const res = await axios.post(
-        "http://localhost:5000/api/auth/change-password",
+        `${API_URL}/auth/change-password`,
         {
           oldPassword,
           newPassword,

@@ -4,13 +4,15 @@ import { tokenStore } from "./tokenSore";
 let isRefreshing = false;
 let refreshSubscribers = [];
 
+const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+
 function onRefreshed(newToken) {
   refreshSubscribers.forEach((cb) => cb(newToken));
   refreshSubscribers = [];
 }
 
 export const api = axios.create({
-  baseURL: "http://localhost:5000/api",
+  baseURL: API_URL,
   withCredentials: true, // cookie refreshToken їде автоматично
 });
 
@@ -37,7 +39,7 @@ api.interceptors.response.use(
       isRefreshing = true;
       try {
         const { data } = await axios.post(
-          "http://localhost:5000/api/auth/refresh-token",
+          `${API_URL}/auth/refresh-token`,
           {},
           { withCredentials: true }
         );
