@@ -58,20 +58,22 @@ router.post("/", authenticate, async (req, res) => {
 router.put("/:id", authenticate, async (req, res) => {
   if (!canEdit(req.user.roles)) return res.sendStatus(403);
 
-  const rec = await Analysis.create({
-    templateId,
-    data,
-    createdBy: req.user.id,
-  });
+  const { data } = req.body;
+  const rec = await Analysis.findByPk(req.params.id);
+  if (!rec) return res.sendStatus(404);
+
+  const before = rec.data;
+  rec.data = data;
+  await rec.save();
 
   await AnalysisLog.create({
     analysisId: rec.id,
     editorId: req.user.id,
-    action: "create",
-    diff: { before: null, after: data },
+    action: "update",
+    diff: { before, after: data },
   });
 
-  res.status(201).json(rec);
+  res.status(200).json(rec);
 });
 
 /* ─────────────── DELETE (soft) ─────────────── */
