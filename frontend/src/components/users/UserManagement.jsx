@@ -32,7 +32,7 @@ export default function UserManagement() {
         fd.append("email", form.email);
         fd.append("signature", file);
 
-        await api.post("/signature/upload-signature", fd);
+        await api.post("/signature/upload", fd);
       }
       const { data } = await api.post("/auth/register", form);
       console.log("REGISTER RESPONSE", data);
