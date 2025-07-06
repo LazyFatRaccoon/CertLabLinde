@@ -63,7 +63,9 @@ export default function UserManagement() {
       fd.append("signature", file);
 
       console.log("📤 uploading", file.name, file.type, original.email);
-      await api.post("/signature/upload-signature", fd);
+      await api.post("/signature/upload", fd, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
     }
     if (Object.keys(diff).length) {
       await api.put(`/users/${id}`, diff);
