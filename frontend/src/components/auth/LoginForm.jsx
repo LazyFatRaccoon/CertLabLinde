@@ -5,7 +5,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { tokenStore } from "../../api/tokenSore";
 import { API_URL } from "../../constants";
 
-export default function LoginForm({ onLogin }) {
+export default function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -42,7 +42,6 @@ export default function LoginForm({ onLogin }) {
       //localStorage.setItem("token", data.accessToken);
       localStorage.setItem("user", JSON.stringify(data.user));
 
-      onLogin?.(); // повідомляємо App
       navigate("/"); // переходимо на головну
     } catch {
       setError("Невірний email або пароль");

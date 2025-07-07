@@ -63,7 +63,9 @@ const Sidebar = ({ roles, onLogout }) => {
             </li>
           </>
         )}
-
+        <li>
+          <Link to="/certificate">Замовити сертифікат</Link>
+        </li>
         <li>
           <Link to="/change-password">Змінити пароль</Link>
         </li>
@@ -115,6 +117,7 @@ const Dashboard = () => {
             user.roles.includes("constructor")) && (
             <Route path="/template-logs" element={<TemplateLogs />} />
           )}
+          <Route path="/certificate" element={<CertificateRequest />} />
           <Route path="/" element={<div>Вітаємо, {user.name}!</div>} />
         </Routes>
         <ToastContainer
@@ -135,10 +138,7 @@ export default function App() {
   return (
     <Router>
       <Routes>
-        <Route
-          path="/login"
-          element={<LoginForm onLogin={() => (window.location.href = "/")} />}
-        />
+        <Route path="/login" element={<LoginForm />} />
         <Route path="/forgot-password" element={<ForgotPasswordForm />} />
         <Route path="/certificate" element={<CertificateRequest />} />
         <Route path="/*" element={<Dashboard />} />

@@ -1,6 +1,8 @@
 // src/pages/CertificateRequest.jsx
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { api } from "@/api/axiosInstance";
+import { tokenStore } from "@/api/tokenSore";
 import { toast } from "react-toastify";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -21,6 +23,7 @@ export default function CertificateRequest() {
     batch: "",
   });
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -42,17 +45,22 @@ export default function CertificateRequest() {
       a.download = `certificate-${form.batch}.pdf`;
       a.click();
       URL.revokeObjectURL(url);
+      toast.success("✅ Сертифікат згенеровано й завантажено");
     } catch (e) {
-      toast.error(
-        e.response?.data?.message ?? "Не знайдено відповідного аналізу"
-      );
+      if (e.response?.status === 404) {
+        toast.info("Сертифікат не знайдено 😕");
+      } else {
+        const msg =
+          e.response?.data?.message ?? "Помилка генерації сертифіката";
+        toast.error(`❌ ${msg}`);
+      }
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="max-w-md mx-auto p-6 space-y-4">
+    <div className="relative max-w-md mx-auto p-6 space-y-4">
       <h1 className="text-2xl font-bold mb-2">Замовити сертифікат</h1>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
@@ -88,6 +96,14 @@ export default function CertificateRequest() {
           {loading ? "Пошук…" : "Запросити сертифікат"}
         </Button>
       </form>
+      <Button
+        type="button"
+        variant="outline"
+        className="absolute left-4 top-4"
+        onClick={() => (tokenStore.get() ? navigate("/") : navigate("/login"))}
+      >
+        Назад до {tokenStore.get() ? "програми" : "входу"}
+      </Button>
     </div>
   );
 }

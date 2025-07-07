@@ -18,10 +18,7 @@ export default function App() {
   return (
     <Router>
       <Routes>
-        <Route
-          path="/login"
-          element={<LoginForm onLogin={() => (window.location.href = "/")} />}
-        />
+        <Route path="/login" element={<LoginForm />} />
         <Route path="/forgot-password" element={<ForgotPasswordForm />} />
         {isAuthenticated ? (
           <>

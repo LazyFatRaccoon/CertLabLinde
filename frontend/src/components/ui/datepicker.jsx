@@ -1,5 +1,6 @@
 // src/components/ui/DatePicker.jsx
 import { forwardRef } from "react";
+import { Calendar } from "lucide-react";
 
 /* helpers ────────────────────────────────────────────── */
 const uiToIso = (ui = "") => {
@@ -33,7 +34,7 @@ const DatePicker = forwardRef(
           type="date"
           value={isoValue}
           onChange={handleNative}
-          className="absolute inset-0 opacity-0 z-10 cursor-pointer"
+          className="absolute inset-0 z-10 cursor-pointer opacity-0 focus:outline-none"
           ref={ref}
           {...rest}
         />
@@ -44,6 +45,11 @@ const DatePicker = forwardRef(
           value={value}
           readOnly
           className="w-full border rounded px-2 py-1 bg-white cursor-pointer"
+        />
+        <Calendar
+          size={18}
+          className="absolute right-2 top-1/2 -translate-y-1/2
+               text-gray-500 pointer-events-none"
         />
       </div>
     );
