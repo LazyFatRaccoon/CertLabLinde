@@ -15,11 +15,13 @@ const PRODUCTS = [
   "Гелій",
   "Вуглекислий газ",
 ];
+const todayUi = () =>
+  new Date().toLocaleDateString("uk-UA").replace(/\//g, ".");
 
 export default function CertificateRequest() {
   const [form, setForm] = useState({
     product: PRODUCTS[0],
-    date: new Date().toISOString().slice(0, 10), // YYYY-MM-DD
+    date: todayUi(), // DD.MM.YYYY
     batch: "",
   });
   const [loading, setLoading] = useState(false);
@@ -60,7 +62,7 @@ export default function CertificateRequest() {
   };
 
   return (
-    <div className="relative max-w-md mx-auto p-6 space-y-4">
+    <div className="max-w-md m-20 mx-auto p-6 space-y-4">
       <h1 className="text-2xl font-bold mb-2">Замовити сертифікат</h1>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
@@ -95,15 +97,17 @@ export default function CertificateRequest() {
         <Button disabled={loading}>
           {loading ? "Пошук…" : "Запросити сертифікат"}
         </Button>
+        <Button
+          type="button"
+          variant="outline"
+          className="absolute left-4 top-4"
+          onClick={() =>
+            tokenStore.get() ? navigate("/") : navigate("/login")
+          }
+        >
+          Назад до {tokenStore.get() ? "програми" : "входу"}
+        </Button>
       </form>
-      <Button
-        type="button"
-        variant="outline"
-        className="absolute left-4 top-4"
-        onClick={() => (tokenStore.get() ? navigate("/") : navigate("/login"))}
-      >
-        Назад до {tokenStore.get() ? "програми" : "входу"}
-      </Button>
     </div>
   );
 }

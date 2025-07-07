@@ -45,7 +45,7 @@ export default function FileUploader({
     const rect = imgRef.current.getBoundingClientRect();
     if (!rect.width || !rect.height) return; // zero-size
     const xRaw = (e.clientX - rect.left) / rect.width;
-    const yRaw = (e.clientY - rect.top) / rect.height;
+    const yRaw = 1 - (e.clientY - rect.top) / rect.height;
     if (!Number.isFinite(xRaw) || !Number.isFinite(yRaw)) return;
     onPick(+xRaw.toFixed(4), +yRaw.toFixed(4));
   };
@@ -120,7 +120,7 @@ export default function FileUploader({
           )
           .map((f) => {
             const left = `${(f.x || 0) * 100}%`;
-            const top = `${(f.y || 0) * 100}%`;
+            const top = `${(1 - f.y || 0) * 100}%`;
 
             /* ─────────── картинки (Підпис / Печатка) ─────────── */
             if (f.type === "img" && f.imageUrl) {

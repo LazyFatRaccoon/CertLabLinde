@@ -40,12 +40,12 @@ const path = require("path");
 const fs = require("fs");
 const sharp = require("sharp");
 const { v4: uuid } = require("uuid");
-const { PDFDocument } = require("pdf-lib");
 
 const { Template, TemplateLog } = require("../models");
 const authenticateToken = require("../middleware/authenticate");
 const onlySupervisors = require("../middleware/onlySupervisors");
 const { normalizeField } = require("../utils/normalizeField");
+const normalizeA4 = require("../utils/normalizeA4");
 
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -70,12 +70,8 @@ async function saveBg(id, file) {
 
   // PDF → залишаємо лише першу сторінку -------------------------------
   if (file.mimetype === "application/pdf") {
-    const original = await PDFDocument.load(file.buffer);
-    const newPdf = await PDFDocument.create();
-    const [first] = await newPdf.copyPages(original, [0]);
-    newPdf.addPage(first);
+    const pdfBytes = await normalizeA4(file.buffer);
 
-    const pdfBytes = await newPdf.save();
     const fileName = `${id}.pdf`;
     fs.writeFileSync(path.join(dir, fileName), pdfBytes);
 

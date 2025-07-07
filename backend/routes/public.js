@@ -94,7 +94,8 @@ router.post("/certificates", async (req, res) => {
     const page = pdfDoc.getPage(0);
     const { width: hW, height: hH } = page.getSize();
     const pctX = (x) => x * hW;
-    const pctY = (y) => hH - y * hH; // (0,0) → upper‑left
+    const pctY = (y) => y * hH;
+    //const pctY = (y) => hH - y * hH; // (0,0) → upper‑left
 
     //----------------------------------------------------------------
     // helper вибору шрифту
@@ -126,7 +127,7 @@ router.post("/certificates", async (req, res) => {
 
       page.drawText(String(val), {
         x: pctX(f.x),
-        y: pctY(f.y),
+        y: pctY(f.y) + (f.fontSize ?? 16) * 0.2, // трохи підняти, аби текст
         size: fontSize,
         font,
         color: pdfLib.rgb(r, g, b),
@@ -152,7 +153,7 @@ router.post("/certificates", async (req, res) => {
       const h = sizePx * (img.height / img.width);
       page.drawImage(img, {
         x: pctX(xPerc),
-        y: pctY(yPerc) - h,
+        y: pctY(yPerc),
         width: sizePx,
         height: h,
       });

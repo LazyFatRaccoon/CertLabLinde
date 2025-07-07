@@ -2,6 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
+* {
+  user-select: none;
+}
+
+/* ___крім___ полів вводу, textarea та contenteditable —
+   там виділення має залишатись */
+input,
+textarea,
+[contenteditable] {
+  user-select: text;
+}
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
