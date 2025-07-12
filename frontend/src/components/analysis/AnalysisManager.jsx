@@ -1,65 +1,86 @@
-// components/analysis/AnalysisManager.jsx
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { api } from "@/api/axiosInstance";
 import AnalysisList from "./AnalysisList";
 import AnalysisTable from "./AnalysisTable";
 import { toast } from "react-toastify";
 
 export default function AnalysisManager() {
-  /* ---------- state ---------- */
-  const [templates, setTemplates] = useState([]); // список {id,name}
-  const [selectedId, setSelectedId] = useState(null); // id, який обрали ліворуч
-  const [tpl, setTpl] = useState(null); // повний Template з fields
-  const [rows, setRows] = useState([]); // Analyses цього шаблону
+  const [templates, setTemplates] = useState([]);
+  const [selectedId, setSelectedId] = useState(null);
+  const [tpl, setTpl] = useState(null);
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  /* ---------- 1. отримуємо всі шаблони один раз ---------- */
-  useEffect(() => {
-    api
-      .get("/templates")
-      .then(({ data }) => setTemplates(data))
-      .catch(() => toast.error("Не вдалося завантажити шаблони"));
-  }, []);
+  // ① ref-контейнер для “поточного” id
+  const currentIdRef = useRef(null);
 
-  /* ---------- 2. коли обрали id → грузимо повний tpl + analyses ---------- */
-  const loadTplAndRows = useCallback(async (id) => {
-    if (!id) {
-      setTpl(null);
-      setRows([]);
-      return;
-    }
+  const fetchTplAndRows = useCallback(async (id) => {
+    if (!id) return;
+    currentIdRef.current = id; // ② зафіксували, що саме зараз очікуємо
+    setLoading(true);
 
     try {
+      console.log("ref#2", currentIdRef.current);
       const [{ data: fullTpl }, { data: list }] = await Promise.all([
-        api.get(`/templates/${id}`), // повний шаблон
-        api.get("/analyses", { params: { tpl: id } }), // список аналізів (може [])
+        api.get(`/templates/${currentIdRef.current}`),
+        api.get("/analyses", { params: { tpl: currentIdRef.current } }),
       ]);
-
+      console.log("ref#3", currentIdRef.current);
+      // ③ Повернулась відповідь – упевніться, що це все ще актуальний запит
+      // if (currentIdRef.current !== id) {
+      //   console.log("differen id and current");
+      //   return;
+      // }
+      console.log("template", fullTpl);
+      console.log("analyses", list);
       setTpl(fullTpl);
       setRows(list);
     } catch {
       toast.error("Помилка завантаження даних");
+    } finally {
+      // той самий захист – аби не зняти loader, якщо вже пішов новий запит
+      //console.log("currentIdRef.current", currentIdRef.current);
+      //console.log("id", id);
+      setLoading(false);
     }
   }, []);
 
-  /* реагуємо на зміну selectedId */
+  /* початкове завантаження списку схем */
   useEffect(() => {
-    loadTplAndRows(selectedId);
-  }, [selectedId, loadTplAndRows]);
+    api
+      .get("/templates")
+      .then(({ data }) => {
+        setTemplates(data);
+        if (data.length) {
+          setSelectedId(data[0].id);
+          fetchTplAndRows(data[0].id);
+        }
+      })
+      .catch(() => toast.error("Не вдалося завантажити шаблони"));
+  }, [fetchTplAndRows]);
 
-  /* ---------- UI ---------- */
+  const handleSelect = (id) => {
+    if (id === selectedId) return; // вже активний
+    fetchTplAndRows(id);
+    setSelectedId(id);
+  };
   return (
     <div className="flex h-full">
       <AnalysisList
         list={templates}
         activeId={selectedId}
-        onSelect={setSelectedId}
+        onSelect={handleSelect}
       />
 
-      {tpl ? (
+      {loading ? (
+        <div className="flex-1 flex items-center justify-center text-gray-500">
+          Завантаження…
+        </div>
+      ) : tpl ? (
         <AnalysisTable tpl={tpl} rows={rows} setRows={setRows} />
       ) : (
-        <div className="flex-1 flex items-center justify-center">
-          <p>Виберіть шаблон&nbsp;→</p>
+        <div className="flex-1 flex items-center justify-center text-gray-500">
+          Виберіть шаблон →
         </div>
       )}
     </div>

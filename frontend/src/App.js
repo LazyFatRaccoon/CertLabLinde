@@ -11,10 +11,13 @@ import ChangePasswordForm from "./components/auth/ChangePasswordForm";
 import RegisterUserForm from "./components/auth/RegisterUserForm";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { useAuthRedirect } from "@/hooks/useAuthRedirect";
+import { useAuth } from "@/context/AuthContext";
 
 export default function App() {
+  const { authError } = useAuth();
   const isAuthenticated = !!localStorage.getItem("token");
-
+  useAuthRedirect(authError);
   return (
     <Router>
       <Routes>

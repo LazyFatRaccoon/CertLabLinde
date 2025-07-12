@@ -112,7 +112,7 @@ router.post("/certificates", async (req, res) => {
     // 3️⃣  Текстові поля
     //----------------------------------------------------------------
     for (const f of tpl.fields) {
-      if (f.type === "img") continue;
+      if (f.type === "img" || f.render === false) continue;
 
       const val = analysis.data?.[f.id];
       if (!val) continue;
@@ -159,21 +159,24 @@ router.post("/certificates", async (req, res) => {
       });
     };
 
-    const stampField = tpl.fields.find((f) => f.label === "Печатка");
-    const signField = tpl.fields.find((f) => f.label === "Підпис");
-
-    if (stampField) {
-      const stampP = path.join(DATA_DIR, "public", "stamp.png");
-      try {
-        await fs.access(stampP);
-        await addPng(stampP, stampField.size, stampField.x, stampField.y);
-      } catch {}
-    }
+    const stampField = tpl.fields.find(
+      (f) => f.label === "Печатка" && f.render !== false
+    );
+    const signField = tpl.fields.find(
+      (f) => f.label === "Підпис" && f.render !== false
+    );
     if (signField && analysis.author?.signature) {
       const signP = path.join(DATA_DIR, "public", analysis.author.signature);
       try {
         await fs.access(signP);
         await addPng(signP, signField.size, signField.x, signField.y);
+      } catch {}
+    }
+    if (stampField) {
+      const stampP = path.join(DATA_DIR, "public", "stamp.png");
+      try {
+        await fs.access(stampP);
+        await addPng(stampP, stampField.size, stampField.x, stampField.y);
       } catch {}
     }
 

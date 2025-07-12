@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
-import { tokenStore } from "../../api/tokenSore";
+import { tokenStore } from "../../api/tokenStore";
 import { API_URL } from "../../constants";
 
 export default function LoginForm() {
@@ -39,7 +39,7 @@ export default function LoginForm() {
 
       /*  🔑  бек тепер віддає   data.accessToken   */
       tokenStore.set(data.accessToken);
-      //localStorage.setItem("token", data.accessToken);
+      localStorage.setItem("token", data.accessToken);
       localStorage.setItem("user", JSON.stringify(data.user));
 
       navigate("/"); // переходимо на головну

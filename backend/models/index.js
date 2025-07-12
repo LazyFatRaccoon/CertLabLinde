@@ -30,5 +30,7 @@ db.User.hasMany(db.Analysis, { foreignKey: "createdBy" });
 db.Analysis.belongsTo(db.User, { as: "author", foreignKey: "createdBy" });
 
 db.AnalysisLog = require("./AnalysisLog")(sequelize, DataTypes);
+db.Analysis.hasMany(db.AnalysisLog, { as: "logs", foreignKey: "analysisId" });
+db.AnalysisLog.belongsTo(db.User, { as: "editor", foreignKey: "editorId" });
 
 module.exports = db;

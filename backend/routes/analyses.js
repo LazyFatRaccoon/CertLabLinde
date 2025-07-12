@@ -13,18 +13,44 @@ const canCreate = (roles = []) => roles.includes("lab") || canEdit(roles);
    ───────────────────────── */
 router.get("/", authenticate, async (req, res) => {
   try {
+    const isSupervisor = req.user?.roles?.includes("supervisor");
+    /* фільтр за шаблоном, якщо треба */
     const where = req.query.tpl ? { templateId: req.query.tpl } : {};
+
+    const includeBase = [
+      { model: Template, as: "template", attributes: ["id", "name"] },
+      { model: User, as: "author", attributes: ["id", "name", "email"] },
+    ];
+
+    /* якщо користувач supervisor → одразу додаємо логи */
+    const include = req.user.roles.includes("supervisor")
+      ? [
+          ...includeBase,
+          {
+            model: AnalysisLog,
+            as: "logs",
+            include: [
+              {
+                model: User,
+                as: "editor",
+                attributes: ["id", "name", "email"],
+              },
+            ],
+            order: [["createdAt", "ASC"]],
+          },
+        ]
+      : includeBase;
+
     const list = await Analysis.findAll({
       where,
-      include: [
-        { model: Template, as: "template", attributes: ["id", "name"] },
-        { model: User, as: "author", attributes: ["id", "name", "email"] },
-      ],
+      include,
       order: [["createdAt", "DESC"]],
+      paranoid: !isSupervisor,
     });
+
     res.json(list);
-  } catch (e) {
-    console.error("GET /analyses error", e);
+  } catch (err) {
+    console.error("GET /analyses error:", err);
     res.status(500).json({ message: "Server error" });
   }
 });

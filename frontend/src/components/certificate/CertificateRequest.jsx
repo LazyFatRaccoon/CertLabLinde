@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "@/api/axiosInstance";
-import { tokenStore } from "@/api/tokenSore";
+import { tokenStore } from "@/api/tokenStore";
 import { toast } from "react-toastify";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";

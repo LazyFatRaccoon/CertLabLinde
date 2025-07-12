@@ -22,6 +22,9 @@ import CertificateRequest from "./components/certificate/CertificateRequest";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
+import { useAuthRedirect } from "@/hooks/useAutoRedirect";
+import { useAuth } from "@/context/AutoContext";
+
 const Sidebar = ({ roles, onLogout }) => {
   return (
     <div className="w-64 bg-gray-100 p-4 h-screen">
@@ -91,6 +94,8 @@ const Dashboard = () => {
     }
   }
   const navigate = useNavigate();
+  const { authError } = useAuth();
+  useAuthRedirect(authError);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
