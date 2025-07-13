@@ -54,9 +54,13 @@ export default function LoginForm() {
       {error && <p className="text-red-500 mb-4">{error}</p>}
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block">Email</label>
+          <label htmlFor="email" className="block">
+            Email
+          </label>
           <input
             type="email"
+            id="email"
+            name="email"
             className="w-full border p-2 rounded"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -64,13 +68,18 @@ export default function LoginForm() {
           />
         </div>
         <div>
-          <label className="block">Пароль</label>
+          <label htmlFor="password" className="block">
+            Пароль
+          </label>
           <div className="relative">
             <input
+              id="password"
+              name="password"
               type={showPassword ? "text" : "password"}
               className="w-full border p-2 rounded pr-10"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              autoComplete="new-password"
               required
             />
             <button
@@ -92,6 +101,8 @@ export default function LoginForm() {
           <Link to="/forgot-password" className="text-blue-600 hover:underline">
             Забули пароль?
           </Link>
+        </div>
+        <div className="text-center mt-4">
           <Link to="/certificate" className="text-blue-600 hover:underline">
             Замовити сертифікат
           </Link>

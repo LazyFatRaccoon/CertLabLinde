@@ -66,40 +66,60 @@ export default function UserCreator({ onCreate }) {
         <h3 className="text-xl font-semibold">Створити користувача</h3>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid md:grid-cols-2 gap-4">
-            <Input
-              placeholder="ПІБ"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-            />
-            <Input
-              placeholder="Email"
-              type="email"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-            />
-            <Select
-              value={form.location}
-              onValueChange={(val) => setForm({ ...form, location: val })}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Локація" />
-              </SelectTrigger>
-              <SelectContent>
-                {locations.map((loc) => (
-                  <SelectItem key={loc} value={loc}>
-                    {loc}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <label htmlFor="newName">
+              <Input
+                id="newName"
+                name="newName"
+                placeholder="ПІБ"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                autoComplete="off"
+              />
+            </label>
+            <label htmlFor="newEmail">
+              <Input
+                id="newEmail"
+                name="newEmail"
+                placeholder="Email"
+                type="email"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                autoComplete="off"
+              />
+            </label>
+            <label htmlFor="newLocation">
+              <Select
+                id="newLocation"
+                name="newLocation"
+                value={form.location}
+                onValueChange={(val) => setForm({ ...form, location: val })}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Локація" />
+                </SelectTrigger>
+                <SelectContent>
+                  {locations.map((loc) => (
+                    <SelectItem key={loc} value={loc}>
+                      {loc}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </label>
           </div>
 
           <div className="space-y-1">
             <div className="font-medium">Ролі</div>
             <div className="flex gap-4 flex-wrap">
               {rolesList.map((role) => (
-                <label key={role} className="flex items-center gap-1">
+                <label
+                  key={role}
+                  className="flex items-center gap-1"
+                  htmlFor={`newRole-${role}`}
+                >
                   <Checkbox
+                    id={`newRole-${role}`}
+                    name="newRole"
                     checked={form.roles.includes(role)}
                     onCheckedChange={() => toggleRole(role)}
                   />

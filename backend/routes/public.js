@@ -8,7 +8,8 @@ const fs = require("fs/promises");
 const pdfLib = require("pdf-lib");
 
 const { Analysis, Template, User } = require("../models");
-const { loadFonts } = require("../utils/fontLoader");
+const { fonts } = require("../constants/fonts");
+const { loadAllFonts } = require("../utils/fontLoader");
 
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, "..");
 
@@ -89,7 +90,7 @@ router.post("/certificates", async (req, res) => {
     );
 
     const pdfDoc = await pdfLib.PDFDocument.load(await fs.readFile(bgAbs));
-    const fonts = await loadFonts(pdfDoc); // { regular,bold,italic,boldItalic,black }
+    const fontMap = await loadAllFonts(pdfDoc, fonts); // { regular,bold,italic,boldItalic,black }
 
     const page = pdfDoc.getPage(0);
     const { width: hW, height: hH } = page.getSize();
@@ -100,13 +101,6 @@ router.post("/certificates", async (req, res) => {
     //----------------------------------------------------------------
     // helper вибору шрифту
     //----------------------------------------------------------------
-    const pickFont = (f) => {
-      if (f.bold && f.italic && fonts.boldItalic) return fonts.boldItalic;
-      if (f.bold && fonts.bold) return fonts.bold;
-      if (f.italic && fonts.italic) return fonts.italic;
-      if (f.bold && fonts.black) return fonts.black;
-      return fonts.regular;
-    };
 
     //----------------------------------------------------------------
     // 3️⃣  Текстові поля
@@ -122,7 +116,17 @@ router.post("/certificates", async (req, res) => {
       const g = parseInt(hex.slice(2, 4), 16) / 255;
       const b = parseInt(hex.slice(4, 6), 16) / 255;
 
-      const font = pickFont(f);
+      const fam = f.font || "Arial";
+      const weight =
+        f.bold && f.italic
+          ? "boldItalic"
+          : f.bold
+          ? "bold"
+          : f.italic
+          ? "italic"
+          : "regular";
+
+      const font = fontMap.get(fam)[weight] || fontMap.get(fam).regular;
       const fontSize = f.fontSize ?? 16;
 
       page.drawText(String(val), {

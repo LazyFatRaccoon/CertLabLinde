@@ -58,16 +58,21 @@ const DatePicker = forwardRef(
         />
 
         {/* прозорий input */}
-        <input
-          ref={inputRef}
-          type="date"
-          value={isoValue}
-          onChange={handleNative}
-          {...rest}
-          className="absolute inset-0 opacity-0 pointer-events-none
+        <label>
+          <input
+            id="invisibleInput"
+            name="invisibleInput"
+            autoComplete="off"
+            ref={inputRef}
+            type="date"
+            value={isoValue}
+            onChange={handleNative}
+            {...rest}
+            className="absolute inset-0 opacity-0 pointer-events-none
                      focus:outline-none
                      [&::-webkit-calendar-picker-indicator]:opacity-0"
-        />
+          />
+        </label>
       </div>
     );
   }

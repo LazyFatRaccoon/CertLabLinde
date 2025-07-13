@@ -48,7 +48,22 @@ app.use(cookieParser());
 
 /* 🔹 3. Статика, що НЕ належить React-білду */
 app.use("/uploads", express.static(path.join(DATA_DIR, "uploads")));
-app.use("/public", express.static(path.join(DATA_DIR, "public")));
+app.use(
+  "/public",
+  (req, res, next) => {
+    res.set("Access-Control-Allow-Origin", CLIENT_URL); // або точний origin
+    next();
+  },
+  express.static(path.join(DATA_DIR, "public"), {
+    // 2. Явно оголосимо content-type для pdf, щоб не було CORB-warning
+    setHeaders: (res, filePath) => {
+      if (filePath.endsWith(".pdf")) {
+        res.setHeader("Content-Type", "application/pdf");
+        res.setHeader("Content-Disposition", "inline");
+      }
+    },
+  })
+);
 
 /* 🔹 4. API */
 app.use("/api", routes);

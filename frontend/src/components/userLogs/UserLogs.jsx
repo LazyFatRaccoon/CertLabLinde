@@ -122,14 +122,17 @@ export default function UserLogs() {
   return (
     <div className="p-4">
       <h2 className="text-2xl font-bold mb-4">Журнал змін користувачів</h2>
-
-      <input
-        value={globalFilter ?? ""}
-        onChange={(e) => setGlobalFilter(e.target.value)}
-        placeholder="Пошук..."
-        className="mb-4 border p-2 rounded w-full"
-      />
-
+      <label htmlFor="search">
+        <input
+          id="search"
+          name="search"
+          value={globalFilter ?? ""}
+          onChange={(e) => setGlobalFilter(e.target.value)}
+          placeholder="Пошук..."
+          className="mb-4 border p-2 rounded w-full"
+          autoComplete="off"
+        />
+      </label>
       <div className="overflow-x-auto">
         <table className="table-auto w-full border">
           <thead>

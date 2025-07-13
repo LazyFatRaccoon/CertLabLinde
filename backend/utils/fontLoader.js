@@ -1,27 +1,54 @@
 const fs = require("fs");
 const path = require("path");
-//const pdfLib = require("pdf-lib");
 const fontkit = require("@pdf-lib/fontkit");
 
-const FONT_DIR = path.join(__dirname, "..", "public", "fonts", "Arial");
+const FONT_ROOT = path.join(__dirname, "..", "public", "fonts");
 
-const fontFiles = {
-  regular: "ArialRegular.ttf",
-  bold: "ArialBold.ttf",
-  italic: "ArialItalic.ttf",
-  boldItalic: "ArialBoldItalic.ttf",
-  black: "ArialBlack.ttf", // опційно
+const FACE = {
+  regular: "Regular",
+  bold: "Bold",
+  italic: "Italic",
+  boldItalic: "BoldItalic",
 };
 
-async function loadFonts(pdfDoc) {
-  pdfDoc.registerFontkit(fontkit);
-  const fonts = {};
-  for (const [key, file] of Object.entries(fontFiles)) {
-    const buf = fs.readFileSync(path.join(FONT_DIR, file));
-    fonts[key] = await pdfDoc.embedFont(buf, { subset: true });
-  }
-  //console.log("Fonts: ", fonts);
-  return fonts; // { regular, bold, italic, boldItalic, black }
+function fontPath(family, face) {
+  return path.join(FONT_ROOT, family, `${family}${FACE[face]}.ttf`);
 }
 
-module.exports = { loadFonts };
+/**
+ * Завантажує шрифт-родину (Arial, Roboto …) у pdf-lib док.
+ *
+ * @param {PDFDocument} pdfDoc – вже створений PDFDocument
+ * @param {string} family – назва шрифту (папки)
+ * @returns {Promise<object>} { regular, bold, italic, boldItalic }
+ */
+async function loadFontFamily(pdfDoc, family) {
+  pdfDoc.registerFontkit(fontkit);
+
+  const out = {};
+  for (const face of Object.keys(FACE)) {
+    const file = fontPath(family, face);
+    // якщо відсутній конкретний face – ігноруємо
+    if (fs.existsSync(file)) {
+      const buf = fs.readFileSync(file);
+      out[face] = await pdfDoc.embedFont(buf, { subset: true });
+    }
+  }
+  return out; // { regular, bold … }
+}
+
+/**
+ * Читає всі родини зі `constants.js` та віддає Map,
+ * щоб у полі можна було швидко дістати потрібний face:
+ *
+ *   const font = fonts.get('Roboto').boldItalic
+ */
+async function loadAllFonts(pdfDoc, families) {
+  const result = new Map();
+  for (const fam of families) {
+    result.set(fam, await loadFontFamily(pdfDoc, fam));
+  }
+  return result;
+}
+
+module.exports = { loadFontFamily, loadAllFonts };

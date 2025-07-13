@@ -34,22 +34,32 @@ export default function ChangePasswordForm() {
     <div className="max-w-sm mx-auto p-4 bg-white rounded-xl shadow-md">
       <h2 className="text-xl font-bold mb-4">Зміна пароля</h2>
       <form onSubmit={handleSubmit}>
-        <input
-          type="password"
-          placeholder="Старий пароль"
-          value={oldPassword}
-          onChange={(e) => setOldPassword(e.target.value)}
-          className="w-full p-2 mb-2 border rounded"
-          required
-        />
-        <input
-          type="password"
-          placeholder="Новий пароль"
-          value={newPassword}
-          onChange={(e) => setNewPassword(e.target.value)}
-          className="w-full p-2 mb-2 border rounded"
-          required
-        />
+        <label htmlFor="oldPassword">
+          <input
+            id="oldPassword"
+            name="oldPassword"
+            type="password"
+            placeholder="Старий пароль"
+            value={oldPassword}
+            onChange={(e) => setOldPassword(e.target.value)}
+            className="w-full p-2 mb-2 border rounded"
+            autoComplete="new-password"
+            required
+          />
+        </label>
+        <label htmlFor="newPassword">
+          <input
+            id="newPassword"
+            name="newPassword"
+            type="password"
+            placeholder="Новий пароль"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            className="w-full p-2 mb-2 border rounded"
+            autoComplete="new-password"
+            required
+          />
+        </label>
         {message && <p className="text-green-600 mb-2">{message}</p>}
         {error && <p className="text-red-500 mb-2">{error}</p>}
         <button

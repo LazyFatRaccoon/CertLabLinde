@@ -1,15 +1,18 @@
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
+import { products } from "../../constants";
 
-const PRODUCTS = [
-  "Оксиген медичний",
-  "Азот",
-  "Аргон",
-  "Гелій",
-  "Вуглекислий газ",
-];
+export function getColumns({
+  tpl,
+  canEdit,
+  setRows,
+  saveRow,
+  deleteRow,
+  user,
+}) {
+  const isLab = user?.roles?.includes("lab");
+  const isManager = user?.roles?.includes("manager");
 
-export function getColumns({ tpl, canEdit, setRows, saveRow, deleteRow }) {
   const fieldCols = tpl.fields
     .filter((f) => f.type !== "img")
     .map((f) => ({
@@ -55,7 +58,7 @@ export function getColumns({ tpl, canEdit, setRows, saveRow, deleteRow }) {
                 }}
               >
                 <option value="">—</option>
-                {PRODUCTS.map((p) => (
+                {products.map((p) => (
                   <option key={p}>{p}</option>
                 ))}
               </select>
@@ -111,14 +114,20 @@ export function getColumns({ tpl, canEdit, setRows, saveRow, deleteRow }) {
       enableSorting: false,
       cell: ({ row }) => {
         const r = row.original;
-        if (r.type === "log" || r.isDeleted || !canEdit) return null;
+        if (r.type === "log" || r.isDeleted) return null;
         const dirty = r.isDraft || r.isDirty;
+        const canSave = (isLab && r.isDraft) || (isManager && dirty);
         return (
           <div className="flex gap-1 justify-center items-center">
-            <Button size="sm" disabled={!dirty} onClick={() => saveRow(r)}>
+            <Button
+              size="sm"
+              disabled={!dirty || !canSave}
+              className={!dirty || !canSave ? "pointer-events-none" : ""}
+              onClick={() => saveRow(r)}
+            >
               💾
             </Button>
-            {!r.isDraft && (
+            {!r.isDraft && isManager && (
               <Button
                 size="sm"
                 variant="destructive"

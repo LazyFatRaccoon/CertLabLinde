@@ -176,6 +176,7 @@ export default function FileUploader({
         accept={accept.join(",")}
         hidden
         onChange={(e) => handleFile(e.target.files?.[0])}
+        autoComplete="off"
       />
       <Button
         type="button"

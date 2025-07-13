@@ -27,6 +27,7 @@ export default function TemplateLogs() {
     return logs.map((l, i) => {
       const before = l.diff?.before || {};
       const after = l.diff?.after || {};
+      const firstName = typeof l.diff?.name === "string" ? l.diff.name : null;
 
       /* тільки реально змінені ключі */
       const changed = ["name", "bgFile"].filter((k) => before[k] !== after[k]);
@@ -39,6 +40,8 @@ export default function TemplateLogs() {
         templateName:
           l.action === "delete"
             ? before.name || "(без назви)"
+            : l.action === "create"
+            ? firstName || "(без назви)"
             : after.name || "(без назви)",
         /* клас кольору для комірок */
         color:
@@ -113,14 +116,16 @@ export default function TemplateLogs() {
   return (
     <div className="p-4">
       <h2 className="text-2xl font-bold mb-4">Журнал змін шаблонів</h2>
-
-      <input
-        value={globalFilter ?? ""}
-        onChange={(e) => setGlobalFilter(e.target.value)}
-        placeholder="Пошук..."
-        className="mb-4 border p-2 rounded w-full"
-      />
-
+      <label htmlFor="search">
+        <input
+          id="search"
+          name="search"
+          value={globalFilter ?? ""}
+          onChange={(e) => setGlobalFilter(e.target.value)}
+          placeholder="Пошук..."
+          className="mb-4 border p-2 rounded w-full"
+        />
+      </label>
       <div className="overflow-x-auto">
         <table className="table-auto w-full border">
           <thead>

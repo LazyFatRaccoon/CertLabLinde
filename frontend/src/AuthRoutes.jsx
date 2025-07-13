@@ -30,21 +30,12 @@ const Sidebar = ({ roles, onLogout }) => {
     <div className="w-64 bg-gray-100 p-4 h-screen">
       <h2 className="text-xl font-bold mb-4">Меню</h2>
       <ul className="space-y-2">
-        {roles.includes("lab") && (
-          <li>
-            <Link to="/add-entry">Додати запис</Link>
-          </li>
-        )}
         {(roles.includes("lab") || roles.includes("manager")) && (
           <li>
             <Link to="/journal">Журнал аналізів</Link>
           </li>
         )}
-        {roles.includes("manager") && (
-          <li>
-            <Link to="/edit-journal">Редагування журналу</Link>
-          </li>
-        )}
+
         {roles.includes("constructor") && (
           <li>
             <Link to="/template">Створити шаблон</Link>

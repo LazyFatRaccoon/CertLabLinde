@@ -1,7 +1,8 @@
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
+import { fonts } from "../../constants";
 
-const fonts = ["Arial", "Times New Roman", "Tahoma", "Courier New"];
+const defaultFont = fonts[0];
 
 /**
  * Таблиця полів шаблону.
@@ -19,7 +20,7 @@ export default function FieldTable({ fields, onChange, onSetActive }) {
     y: 0,
     size: 100,
     fontSize: 16,
-    font: "Arial",
+    font: defaultFont,
     color: "#000000",
     bold: false,
     italic: false,
@@ -80,10 +81,14 @@ export default function FieldTable({ fields, onChange, onSetActive }) {
                 {fixed ? (
                   f.label
                 ) : (
-                  <Input
-                    value={f.label}
-                    onChange={(e) => update(f.id, { label: e.target.value })}
-                  />
+                  <label htmlFor={`label-${f.id}`}>
+                    <Input
+                      id={`label-${f.id}`}
+                      name={`label-${f.id}`}
+                      value={f.label}
+                      onChange={(e) => update(f.id, { label: e.target.value })}
+                    />
+                  </label>
                 )}
               </td>
 
@@ -92,15 +97,19 @@ export default function FieldTable({ fields, onChange, onSetActive }) {
                 {fixed ? (
                   f.type
                 ) : (
-                  <select
-                    value={f.type}
-                    onChange={(e) => update(f.id, { type: e.target.value })}
-                  >
-                    <option value="text">text</option>
-                    <option value="select">select</option>
-                    <option value="calc">calc</option>
-                    <option value="img">img</option>
-                  </select>
+                  <label htmlFor={`type-${f.id}`}>
+                    <select
+                      id={`type-${f.id}`}
+                      name={`type-${f.id}`}
+                      value={f.type}
+                      onChange={(e) => update(f.id, { type: e.target.value })}
+                    >
+                      <option value="text">text</option>
+                      <option value="select">select</option>
+                      <option value="calc">calc</option>
+                      <option value="img">img</option>
+                    </select>
+                  </label>
                 )}
               </td>
 
@@ -117,63 +126,85 @@ export default function FieldTable({ fields, onChange, onSetActive }) {
 
               {/* ---- X / Y ---- */}
               <td className="border px-1">
-                <Input
-                  className="w-16 mx-auto"
-                  type="number"
-                  step="0.0001"
-                  value={Number.isFinite(f.x) ? f.x : ""}
-                  onChange={(e) => update(f.id, { x: +e.target.value })}
-                />
+                <label html={`x-${f.id}`}>
+                  {" "}
+                  <Input
+                    id={`x-${f.id}`}
+                    name={`x-${f.id}`}
+                    className="w-16 mx-auto"
+                    type="number"
+                    step="0.0001"
+                    value={Number.isFinite(f.x) ? f.x : ""}
+                    onChange={(e) => update(f.id, { x: +e.target.value })}
+                  />
+                </label>
               </td>
               <td className="border px-1">
-                <Input
-                  className="w-16 mx-auto"
-                  type="number"
-                  step="0.0001"
-                  value={Number.isFinite(f.y) ? f.y : ""}
-                  onChange={(e) => update(f.id, { y: +e.target.value })}
-                />
+                <label html={`y-${f.id}`}>
+                  <Input
+                    id={`y-${f.id}`}
+                    name={`y-${f.id}`}
+                    className="w-16 mx-auto"
+                    type="number"
+                    step="0.0001"
+                    value={Number.isFinite(f.y) ? f.y : ""}
+                    onChange={(e) => update(f.id, { y: +e.target.value })}
+                  />
+                </label>
               </td>
 
               {/* ---- Sz ---- */}
               <td className="border px-1">
-                <Input
-                  className="w-14 mx-auto"
-                  type="number"
-                  value={sizeVal}
-                  onChange={(e) =>
-                    update(
-                      f.id,
-                      f.type === "img"
-                        ? { size: +e.target.value }
-                        : { fontSize: +e.target.value }
-                    )
-                  }
-                />
+                <label html={`sz-${f.id}`}>
+                  <Input
+                    id={`sz-${f.id}`}
+                    name={`sz-${f.id}`}
+                    className="w-14 mx-auto"
+                    type="number"
+                    value={sizeVal}
+                    onChange={(e) =>
+                      update(
+                        f.id,
+                        f.type === "img"
+                          ? { size: +e.target.value }
+                          : { fontSize: +e.target.value }
+                      )
+                    }
+                  />
+                </label>
               </td>
 
               {/* ---- Color ---- */}
               <td className="border px-1">
                 {f.type === "img" ? null : (
-                  <input
-                    type="color"
-                    value={f.color || "#000000"}
-                    onChange={(e) => update(f.id, { color: e.target.value })}
-                  />
+                  <label htmlFor={`color-${f.id}`}>
+                    <input
+                      id={`color-${f.id}`}
+                      name={`color-${f.id}`}
+                      type="color"
+                      value={f.color || "#000000"}
+                      onChange={(e) => update(f.id, { color: e.target.value })}
+                    />
+                  </label>
                 )}
               </td>
 
               {/* ---- Font ---- */}
               <td className="border px-1">
                 {f.type === "img" ? null : (
-                  <select
-                    value={f.font || fonts[0]}
-                    onChange={(e) => update(f.id, { font: e.target.value })}
-                  >
-                    {fonts.map((fn) => (
-                      <option key={fn}>{fn}</option>
-                    ))}
-                  </select>
+                  <label htmlFor={`font-${f.id}`}>
+                    <select
+                      id={`font-${f.id}`}
+                      name={`font-${f.id}`}
+                      autoComplete="off"
+                      value={f.font || fonts[0]}
+                      onChange={(e) => update(f.id, { font: e.target.value })}
+                    >
+                      {fonts.map((fn) => (
+                        <option key={fn}>{fn}</option>
+                      ))}
+                    </select>
+                  </label>
                 )}
               </td>
 
@@ -209,20 +240,29 @@ export default function FieldTable({ fields, onChange, onSetActive }) {
               {/* ---- Demo text ---- */}
               <td className="border px-1">
                 {f.type === "img" ? null : (
-                  <Input
-                    value={f.demo || ""}
-                    onChange={(e) => update(f.id, { demo: e.target.value })}
-                  />
+                  <label htmlFor={`demo-${f.id}`}>
+                    <Input
+                      id={`demo-${f.id}`}
+                      name={`demo-${f.id}`}
+                      autoComplete="off"
+                      value={f.demo || ""}
+                      onChange={(e) => update(f.id, { demo: e.target.value })}
+                    />
+                  </label>
                 )}
               </td>
 
               {/* ---- Render toggle ---- */}
               <td className="border px-1">
-                <input
-                  type="checkbox"
-                  checked={f.render !== false}
-                  onChange={(e) => update(f.id, { render: e.target.checked })}
-                />
+                <label htmlFor={`isRender${f.id}`}>
+                  <input
+                    id={`isRender${f.id}`}
+                    name={`isRender${f.id}`}
+                    type="checkbox"
+                    checked={f.render !== false}
+                    onChange={(e) => update(f.id, { render: e.target.checked })}
+                  />
+                </label>
               </td>
 
               {/* ---- Delete ---- */}

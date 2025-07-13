@@ -16,21 +16,30 @@ export default function AnalysisTableHeader({
       <h2 className="text-xl font-bold">{tpl.name}</h2>
       <div className="flex gap-3 items-center">
         {isSupervisor && (
-          <label className="flex items-center gap-1 text-sm select-none">
+          <label
+            htmlFor="showChanges"
+            className="flex items-center gap-1 text-sm select-none"
+          >
             <input
               type="checkbox"
+              name="showChanges"
+              id="showChanges"
               checked={showLogs}
               onChange={(e) => setShowLogs(e.target.checked)}
             />
             Показати зміни
           </label>
         )}
-        <Input
-          placeholder="Пошук…"
-          value={globalFilter ?? ""}
-          onChange={(e) => setGlobalFilter(e.target.value)}
-          className="text-sm"
-        />
+        <label htmlFor="search">
+          <Input
+            name="search"
+            id="search"
+            placeholder="Пошук…"
+            value={globalFilter ?? ""}
+            onChange={(e) => setGlobalFilter(e.target.value)}
+            className="text-sm"
+          />
+        </label>
         {mayAdd && <Button onClick={addDraft}>+ Додати аналіз</Button>}
       </div>
     </div>

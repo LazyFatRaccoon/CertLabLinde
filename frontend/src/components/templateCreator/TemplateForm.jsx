@@ -90,6 +90,7 @@ export default function TemplateForm({ draft, setDraft, onSave, onDelete }) {
     }
   }, [draft.id, draft.fields.length, setDraft]);
   // draft = { id?, name:"", bgFile:"", fields:[...] }
+
   const width = 600;
   const height = width * 1.414;
 
@@ -137,14 +138,16 @@ export default function TemplateForm({ draft, setDraft, onSave, onDelete }) {
   return (
     <div className="flex flex-col flex-1 p-6 gap-6">
       {/* Загальна інформація */}
-
-      <Input
-        className="flex-1"
-        placeholder="Назва шаблону"
-        value={draft.name}
-        onChange={(e) => setDraft({ ...draft, name: e.target.value })}
-      />
-
+      <label htmlFor="templateName">
+        <Input
+          id="templateName"
+          name="templateName"
+          className="flex-1"
+          placeholder="Назва шаблону"
+          value={draft.name}
+          onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+        />
+      </label>
       <FileUploader
         accept={["image/png", "image/jpeg", "application/pdf"]}
         previewWidth={width}

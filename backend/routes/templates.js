@@ -1,38 +1,3 @@
-// const express = require("express");
-// const router = express.Router();
-// const multer = require("multer");
-// const path = require("path");
-// const fs = require("fs");
-// const { v4: uuidv4 } = require("uuid");
-// const PdfConverter = require("pdf-poppler");
-
-// const upload = multer({ dest: "uploads/" });
-
-// router.post("/upload-template", upload.single("file"), async (req, res) => {
-//   const pdfPath = req.file.path;
-//   const outputDir = path.join(__dirname, "..", "public");
-//   const outputPrefix = uuidv4();
-
-//   try {
-//     await PdfConverter.convert(pdfPath, {
-//       format: "png",
-//       out_dir: outputDir,
-//       out_prefix: outputPrefix,
-//       page: 1,
-//       resolution: 450,
-//     });
-
-//     fs.unlinkSync(pdfPath);
-
-//     const outputFilename = `${outputPrefix}-1.png`; // pdf-poppler додає "-1" до імені
-//     res.json({ imageUrl: `/${outputFilename}` });
-//   } catch (err) {
-//     console.error("PDF → PNG error:", err);
-//     res.status(500).json({ message: "Не вдалося обробити PDF" });
-//   }
-// });
-// module.exports = router;
-
 const express = require("express");
 const router = express.Router();
 const multer = require("multer");
@@ -125,11 +90,16 @@ router.post(
         ...extra,
       });
 
+      const tplData = tpl.toJSON();
+
       await TemplateLog.create({
         templateId: tpl.id,
         editorId: req.user.id,
         action: "create",
-        diff: null,
+        diff: {
+          name: tplData.name,
+          bgFile: tplData.bgFile,
+        },
       });
 
       res.status(201).json(tpl);

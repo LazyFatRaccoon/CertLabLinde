@@ -25,14 +25,18 @@ export default function ForgotPasswordForm() {
     <div className="max-w-sm mx-auto p-4 bg-white rounded-xl shadow-md">
       <h2 className="text-xl font-bold mb-4">Відновлення пароля</h2>
       <form onSubmit={handleSubmit}>
-        <input
-          type="email"
-          placeholder="Ваша електронна пошта"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="w-full p-2 mb-2 border rounded"
-          required
-        />
+        <label htmlFor="email">
+          <input
+            id="email"
+            name="email"
+            type="email"
+            placeholder="Ваша електронна пошта"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full p-2 mb-2 border rounded"
+            required
+          />
+        </label>
         {message && <p className="text-green-600 mb-2">{message}</p>}
         {error && <p className="text-red-500 mb-2">{error}</p>}
         <button

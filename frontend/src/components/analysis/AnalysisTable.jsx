@@ -93,8 +93,8 @@ export default function AnalysisTable({ tpl, rows = [], setRows }) {
   );
 
   const columns = useMemo(
-    () => getColumns({ tpl, canEdit, setRows, saveRow, deleteRow }),
-    [tpl, canEdit, setRows, saveRow, deleteRow]
+    () => getColumns({ tpl, canEdit, setRows, saveRow, deleteRow, user }),
+    [tpl, canEdit, setRows, saveRow, deleteRow, user]
   );
 
   const table = useReactTable({
