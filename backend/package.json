@@ -22,6 +22,7 @@
     "validator": "^13.15.15"
   },
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "postinstall": "npm install --platform=linux --arch=x64 sharp"
   }
 }
