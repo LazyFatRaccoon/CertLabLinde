@@ -13,14 +13,14 @@ import {
 
 import FileUploader from "./FileUploader";
 
-import { rolesList, locations } from "../../constants";
+import { rolesList } from "../../constants";
 
-export default function UserCreator({ onCreate }) {
+export default function UserCreator({ onCreate, locations = [] }) {
   const [form, setForm] = useState({
     name: "",
     email: "",
     roles: [],
-    location: "Дніпро",
+    locationId: "",
     signature: "",
   });
   const [file, setFile] = useState(null);
@@ -49,7 +49,7 @@ export default function UserCreator({ onCreate }) {
         name: "",
         email: "",
         roles: [],
-        location: "Дніпро",
+        locationId: "",
         signature: "",
       });
       setFile(null);
@@ -91,16 +91,18 @@ export default function UserCreator({ onCreate }) {
               <Select
                 id="newLocation"
                 name="newLocation"
-                value={form.location}
-                onValueChange={(val) => setForm({ ...form, location: val })}
+                value={String(form.locationId)}
+                onValueChange={(val) =>
+                  setForm({ ...form, locationId: Number(val) })
+                }
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Локація" />
                 </SelectTrigger>
                 <SelectContent>
                   {locations.map((loc) => (
-                    <SelectItem key={loc} value={loc}>
-                      {loc}
+                    <SelectItem key={loc.id} value={String(loc.id)}>
+                      {loc.name}
                     </SelectItem>
                   ))}
                 </SelectContent>

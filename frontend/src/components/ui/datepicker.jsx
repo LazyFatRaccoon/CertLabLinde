@@ -20,7 +20,10 @@ const isoToUi = (iso = "") => {
 
 /* компонент ────────────────────────────── */
 const DatePicker = forwardRef(
-  ({ value = "", onChange, className = "", ...rest }, refFromParent) => {
+  (
+    { value = "", onChange, fullWidth = true, className = "", ...rest },
+    refFromParent
+  ) => {
     const innerRef = useRef();
     const inputRef = refFromParent ?? innerRef;
 
@@ -43,7 +46,9 @@ const DatePicker = forwardRef(
     return (
       <div
         className={`relative ${className}
-                    group w-full border rounded pl-2 pr-14 py-1
+                    group ${
+                      fullWidth ? "w-full" : ""
+                    } border rounded pl-2 pr-14 py-1
                     bg-white cursor-pointer select-none
                     hover:border-blue-500 transition-colors`}
         onClick={openCalendar}

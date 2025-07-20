@@ -15,7 +15,7 @@ router.get("/", authenticateToken, onlySupervisors, async (req, res) => {
         "email",
         "roles",
         "signature",
-        "location",
+        "locationId",
         "lastLogin",
         "loginCount",
         "createdAt",
@@ -33,7 +33,7 @@ router.put("/:id", authenticateToken, onlySupervisors, async (req, res) => {
     const user = await User.findByPk(req.params.id);
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    const allowed = ["name", "roles", "location", "signature"];
+    const allowed = ["name", "roles", "locationId", "signature"];
     const updates = {};
     const diffOld = {};
     const diffNew = {};

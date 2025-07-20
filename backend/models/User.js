@@ -36,9 +36,9 @@ const User = sequelize.define(
       type: DataTypes.STRING,
       defaultValue: "",
     },
-    location: {
+    locationId: {
       type: DataTypes.STRING,
-      defaultValue: "Дніпро",
+      defaultValue: "",
     },
     loginCount: {
       type: DataTypes.INTEGER,

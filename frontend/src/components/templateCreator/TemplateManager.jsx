@@ -1,87 +1,75 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-//import { Button } from "../ui/button";
-import TemplateList from "./TemplateList";
-import TemplateForm from "./TemplateForm";
+import { useLocation, useNavigate } from "react-router-dom";
 import { api } from "../../api/axiosInstance";
 import { toast } from "react-toastify";
 import { normalizeField } from "@/utils/normalizeField";
+import TemplateForm from "./TemplateForm";
 
-export default function TemplateManager() {
+export default function TemplateManager({ onTemplatesUpdate }) {
   const navigate = useNavigate();
-  const [templates, setTemplates] = useState([]);
-  const [activeId, setActiveId] = useState(null);
+  const location = useLocation();
+
+  const selectedId = location.state?.selectedId || null;
   const [draft, setDraft] = useState(null);
-  //const [selectedId, setSelectedId] = useState(null);
 
-  /* load list once */
   useEffect(() => {
-    api.get("/templates").then(({ data }) => setTemplates(data));
-  }, []);
+    if (!selectedId) {
+      setDraft({ name: "", bgFile: "", fields: [] });
+      return;
+    }
 
-  /* load single template when activeId changes */
-  useEffect(() => {
-    if (!activeId) return;
-    api.get(`/templates/${activeId}`).then(({ data }) => setDraft(data));
-  }, [activeId]);
+    api.get(`/templates/${selectedId}`).then(({ data }) => setDraft(data));
+  }, [selectedId]);
 
-  /* CRUD helpers */
   const handleSave = async (draft) => {
     if (!draft.name.trim()) {
       toast.error("Назва обов'язкова");
       return;
     }
 
-    /* формуємо FormData */
     const fd = new FormData();
     fd.append("name", draft.name);
     fd.append("fields", JSON.stringify(draft.fields.map(normalizeField)));
     if (draft.bgFileFile) fd.append("bg", draft.bgFileFile);
 
-    /* POST vs PUT */
     try {
       if (draft.id) {
         await api.put(`/templates/${draft.id}`, fd);
       } else {
-        await api.post("/templates", fd);
+        const res = await api.post("/templates", fd);
+        draft.id = res.data.id;
       }
-      const { data } = await api.get("/templates");
-      setTemplates(data);
-      toast.success("Шаблон збережено");
 
-      // повертаємось у початковий стан
-      setActiveId(null);
-      setDraft(null);
-      navigate("/template"); // або navigate("/templates")
+      // 🔄 Отримати оновлений список шаблонів і оновити пропс
+      const updated = await api.get("/templates");
+      if (onTemplatesUpdate) onTemplatesUpdate(updated.data);
+
+      toast.success("Шаблон збережено");
+      navigate("/template", { state: { selectedId: draft.id || null } });
     } catch (e) {
-      toast.error("Помилка збереження");
-      console.error(e);
+      toast.error(e.response?.data?.message || "Помилка збереження");
+      console.error("handleSave →", e);
     }
   };
 
   const deleteTemplate = async (id) => {
-    await api.delete(`/templates/${id}`);
+    try {
+      await api.delete(`/templates/${id}`);
+      toast.success("Шаблон видалено");
+      setDraft(null);
 
-    setTemplates((l) => l.filter((t) => t.id !== id));
-    setActiveId(null);
-    setDraft(null);
+      const updated = await api.get("/templates");
+      if (onTemplatesUpdate) onTemplatesUpdate(updated.data);
+
+      navigate("/template", { state: {} });
+    } catch (e) {
+      toast.error("Помилка видалення");
+      console.error(e);
+    }
   };
 
-  /* UI */
   return (
     <div className="flex h-full">
-      <TemplateList
-        templates={templates}
-        activeId={activeId}
-        onSelect={setActiveId}
-        onCreateNew={() =>
-          setDraft({
-            /* «+ Новий шаблон» */ name: "",
-            bgFile: "",
-            fields: [],
-          })
-        }
-      />
       {draft ? (
         <TemplateForm
           draft={draft}
@@ -90,7 +78,9 @@ export default function TemplateManager() {
           onDelete={deleteTemplate}
         />
       ) : (
-        <div className="flex-1 flex items-center justify-center"></div>
+        <div className="flex-1 flex items-center justify-center">
+          Оберіть шаблон або створіть новий у боковому меню.
+        </div>
       )}
     </div>
   );

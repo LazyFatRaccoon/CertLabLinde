@@ -1,6 +1,7 @@
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
-import { products } from "../../constants";
+import { Select, SelectItem } from "../ui/select";
+import axios from "axios";
 
 export function getColumns({
   tpl,
@@ -9,18 +10,55 @@ export function getColumns({
   saveRow,
   deleteRow,
   user,
+  selectionMode = false,
+  selectedRows = [],
+  setSelectedRows = () => {},
 }) {
   const isLab = user?.roles?.includes("lab");
   const isManager = user?.roles?.includes("manager");
 
+  const selectionColumn = {
+    id: "select",
+    header: "",
+    enableSorting: false,
+    cell: ({ row }) => {
+      const r = row.original;
+      console.log("🔍 [checkbox] Rendering row.original:", r); // ← Лог для перевірки
+
+      // Рендеримо чекбокс лише для основного запису
+      if (!r || r.type !== "main" || r.isDeleted) return null;
+
+      const checked = selectedRows.includes(r.id);
+      return (
+        <div className="flex justify-center items-center h-full">
+          <input
+            id={`select-${r.id}`}
+            type="checkbox"
+            checked={checked}
+            onChange={() => {
+              setSelectedRows((prev) =>
+                checked ? prev.filter((id) => id !== r.id) : [...prev, r.id]
+              );
+            }}
+            className="w-4 h-4"
+          />
+        </div>
+      );
+    },
+  };
+
   const fieldCols = tpl.fields
-    .filter((f) => f.type !== "img")
+    .filter((f) => f.type !== "img" && f.type !== "selectOnce")
     .map((f) => ({
       header: f.label,
+      id: `field_${f.id}`,
       accessorFn: (row) => (row.type === "main" ? row.data?.[f.id] ?? "" : ""),
       cell: ({ row, getValue }) => {
         const r = row.original;
         const val = getValue();
+        const isEditing = r.isEditing;
+        const disabled = r.isDeleted || (!r.isDraft && !canEdit);
+        const canChange = !disabled && (r.isDraft || canEdit);
 
         if (r.type === "log") {
           if (f.label === "Дата проведення аналізу")
@@ -31,51 +69,36 @@ export function getColumns({
           return before !== after ? `${before ?? "—"} → ${after ?? "—"}` : "";
         }
 
-        const disabled = r.isDeleted || (!r.isDraft && !canEdit);
-        const canChange = !disabled && (r.isDraft || canEdit);
-
-        if (f.label === "Продукт" && canChange) {
+        if (f.type === "select" && canChange && isEditing) {
           return (
-            <div className="flex items-center h-full">
-              <select
-                className="border px-1 py-0.5 text-sm disabled:opacity-50 h-full"
-                disabled={disabled}
-                name={`select-${f.id}`}
-                value={val}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  setRows((arr) =>
-                    arr.map((x) =>
-                      x.id === r.id
-                        ? {
-                            ...x,
-                            data: { ...x.data, [f.id]: v },
-                            isDirty: true,
-                          }
-                        : x
-                    )
-                  );
-                }}
-              >
-                <option value="">—</option>
-                {products.map((p) => (
-                  <option key={p}>{p}</option>
-                ))}
-              </select>
-            </div>
+            <Select
+              value={val}
+              onValueChange={(v) => {
+                setRows((arr) =>
+                  arr.map((x) =>
+                    x.id === r.id
+                      ? { ...x, data: { ...x.data, [f.id]: v }, isDirty: true }
+                      : x
+                  )
+                );
+              }}
+              className="text-sm h-full"
+            >
+              <SelectItem value="">—</SelectItem>
+              {(f.options || []).map((opt) => (
+                <SelectItem key={opt} value={opt}>
+                  {opt}
+                </SelectItem>
+              ))}
+            </Select>
           );
         }
 
-        if (f.type === "select" || f.type === "calc" || !canChange)
-          return <div className="flex items-center h-full">{val}</div>;
-
-        return (
-          <div className="flex items-center h-full">
+        if (f.type !== "select" && canChange && isEditing) {
+          return (
             <Input
-              className="text-sm disabled:opacity-50 h-full"
-              disabled={disabled}
+              className="text-sm h-full"
               value={val}
-              name={`field-${f.id}`}
               onChange={(e) => {
                 const v = e.target.value;
                 setRows((arr) =>
@@ -87,46 +110,114 @@ export function getColumns({
                 );
               }}
             />
-          </div>
-        );
+          );
+        }
+
+        return <div className="flex items-center h-full">{val}</div>;
       },
     }));
 
   return [
+    ...(selectionMode ? [selectionColumn] : []),
     {
       header: "#",
-      id: "_rowIndex",
-      //accessorFn: (_, i) => i,
+      id: "rowIndex",
       enableSorting: false,
       cell: ({ row }) => {
         const r = row.original;
-        //if (r.type === "main") return `${r.sortKey}`;
-        if (r.type === "main") return r.sortKey + 1;
-        //if (r.type === "log") return `${r.parentSort}.${r.logIndex}`;
-        return `${r.parentSort + 1}.${(r.logIndex ?? 0) + 1}`;
-        //return "";
+        return r.type === "main"
+          ? r.sortKey + 1
+          : `${r.parentSort + 1}.${(r.logIndex ?? 0) + 1}`;
       },
     },
     ...fieldCols,
     {
       header: "",
-      accessorKey: "actions",
+      id: "actions",
       enableSorting: false,
       cell: ({ row }) => {
         const r = row.original;
         if (r.type === "log" || r.isDeleted) return null;
+
         const dirty = r.isDraft || r.isDirty;
         const canSave = (isLab && r.isDraft) || (isManager && dirty);
+        const batch = tpl.fields.find((f) => f.label === "Партія");
+        const date = tpl.fields.find(
+          (f) => f.label === "Дата проведення аналізу"
+        );
+
+        const batchVal = r.data?.[batch?.id] ?? "";
+        const dateVal = r.data?.[date?.id] ?? "";
+
+        const handleDownloadCert = async () => {
+          try {
+            const res = await axios.post(
+              "/api/public/certificates",
+              {
+                templateName: tpl.name,
+                batch: batchVal,
+                date: dateVal,
+              },
+              { responseType: "blob" }
+            );
+            const url = window.URL.createObjectURL(res.data);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `Сертифікат_${
+              tpl.name
+            }_${batchVal}_${dateVal.replaceAll(".", "")}.pdf`;
+            a.click();
+          } catch (e) {
+            alert("Помилка завантаження сертифіката");
+          }
+        };
+
         return (
           <div className="flex gap-1 justify-center items-center">
+            {isManager && (
+              <Button
+                size="sm"
+                variant={r.isEditing ? "secondary" : "outline"}
+                className={
+                  r.isDraft
+                    ? "bg-blue-800 pointer-events-none"
+                    : r.isEditing
+                    ? "bg-blue-800"
+                    : ""
+                }
+                onClick={() =>
+                  setRows((arr) =>
+                    arr.map((x) =>
+                      x.id === r.id ? { ...x, isEditing: !x.isEditing } : x
+                    )
+                  )
+                }
+                disabled={r.isDraft}
+              >
+                ✏️
+              </Button>
+            )}
+
             <Button
               size="sm"
               disabled={!dirty || !canSave}
               className={!dirty || !canSave ? "pointer-events-none" : ""}
-              onClick={() => saveRow(r)}
+              onClick={() => {
+                saveRow({ ...r, isEditing: false });
+                setRows((arr) =>
+                  arr.map((x) =>
+                    x.id === r.id ? { ...x, isEditing: false } : x
+                  )
+                );
+              }}
             >
               💾
             </Button>
+            {!r.isDraft && (
+              <Button size="sm" variant="ghost" onClick={handleDownloadCert}>
+                📄
+              </Button>
+            )}
             {!r.isDraft && isManager && (
               <Button
                 size="sm"

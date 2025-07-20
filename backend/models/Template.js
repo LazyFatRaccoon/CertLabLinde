@@ -11,6 +11,7 @@ module.exports = (sequelize, DataTypes) => {
       bgFile: { type: DataTypes.STRING }, // /public/templates/<id>.png|pdf
       width: { type: DataTypes.INTEGER, allowNull: true },
       height: { type: DataTypes.INTEGER, allowNull: true },
+
       fields: {
         // нормалізований масив
         type: DataTypes.JSON,

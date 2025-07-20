@@ -6,7 +6,7 @@ const db = require("./models");
 const bcrypt = require("bcrypt");
 const routes = require("./routes");
 const cookieParser = require("cookie-parser");
-
+const constants = require("./constants/settings");
 const app = express();
 const PORT = process.env.PORT || 5000;
 const DATA_DIR = process.env.DATA_DIR || __dirname;
@@ -87,20 +87,51 @@ if (process.env.NODE_ENV === "production") {
   try {
     await db.sequelize.sync();
 
-    // створюємо admin, якщо потрібен
+    // 🔸 Ініціалізація settings
+    const { Setting } = db;
+    const { locations, products } = constants;
+    console.log("locations", locations);
+    const settingCount = await Setting.count();
+    if (settingCount === 0) {
+      await Setting.bulkCreate([
+        { key: "locations", value: locations },
+        { key: "products", value: products },
+      ]);
+      const allSettings = await Setting.findAll();
+      console.log(
+        "🛠 Збережені settings:",
+        allSettings.map((s) => ({ key: s.key, value: s.value }))
+      );
+    }
+    // 🔸 Створюємо admin, якщо потрібен
     const userCount = await db.User.count();
     if (userCount === 0) {
       const hashedPassword = await bcrypt.hash("admin", 10);
+
+      const firstLocationSetting = await Setting.findOne({
+        where: { key: "location" },
+        order: [["id", "ASC"]],
+      });
+
+      const defaultLocation =
+        firstLocationSetting && Array.isArray(firstLocationSetting.value)
+          ? firstLocationSetting.value[0] || "Дніпро"
+          : "Дніпро";
+
       await db.User.create({
         name: "Admin",
         email: "vladimir.todorov.ukraine@gmail.com",
         password: hashedPassword,
         roles: ["supervisor"],
         signature: "",
+        location: defaultLocation,
       });
-      console.log("Default supervisor created");
-    }
 
+      console.log(
+        "👤 Default supervisor created with location:",
+        defaultLocation
+      );
+    }
     app.listen(PORT, () => console.log(`🌐 Server running on ${PORT}`));
   } catch (err) {
     console.error("Unable to connect to DB:", err);

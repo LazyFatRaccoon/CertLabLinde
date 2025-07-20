@@ -74,7 +74,7 @@ export default function AnalysisTableBody({ table, data }) {
     );
     sortedRows.push(...children);
   });
-
+  //console.log(table.getAllColumns().map((col) => col.id));
   return (
     <>
       <div className="overflow-auto border rounded">
@@ -117,16 +117,17 @@ export default function AnalysisTableBody({ table, data }) {
                     : ""
                 }`}
               >
-                {r.getVisibleCells().map((c, colIndex) => {
+                {r.getVisibleCells().map((c) => {
                   let content;
-                  if (colIndex === 0) {
-                    if (r.original.type === "main") {
-                      content = r.original.sortKey + 1;
-                    } else {
-                      content = `${r.original.parentSort + 1}.${
-                        (r.original.logIndex ?? 0) + 1
-                      }`;
-                    }
+
+                  if (c.column.id === "rowIndex") {
+                    const rOrig = r.original;
+                    content =
+                      rOrig.type === "main"
+                        ? rOrig.sortKey + 1
+                        : `${rOrig.parentSort + 1}.${
+                            (rOrig.logIndex ?? 0) + 1
+                          }`;
                   } else {
                     content = flexRender(
                       c.column.columnDef.cell,
@@ -140,7 +141,10 @@ export default function AnalysisTableBody({ table, data }) {
                       className="border px-1 py-0.5 align-middle text-center"
                     >
                       <div className="flex justify-center items-center h-full">
-                        {content}
+                        {(() => {
+                          console.log("🔍 Cell", { content });
+                          return content;
+                        })()}
                       </div>
                     </td>
                   );
@@ -152,26 +156,28 @@ export default function AnalysisTableBody({ table, data }) {
       </div>
 
       {/* pagination */}
-      <div className="flex justify-between items-center mt-2">
-        <button
-          className="text-sm px-2 py-1 border rounded disabled:opacity-50"
-          onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
-        >
-          ←
-        </button>
-        <span>
-          Сторінка {table.getState().pagination.pageIndex + 1} із{" "}
-          {table.getPageCount()}
-        </span>
-        <button
-          className="text-sm px-2 py-1 border rounded disabled:opacity-50"
-          onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
-        >
-          →
-        </button>
-      </div>
+      {table.getPageCount() > 1 && (
+        <div className="flex justify-between items-center mt-2">
+          <button
+            className="text-sm px-2 py-1 border rounded disabled:opacity-50"
+            onClick={() => table.previousPage()}
+            disabled={!table.getCanPreviousPage()}
+          >
+            ←
+          </button>
+          <span>
+            Сторінка {table.getState().pagination.pageIndex + 1} із{" "}
+            {table.getPageCount()}
+          </span>
+          <button
+            className="text-sm px-2 py-1 border rounded disabled:opacity-50"
+            onClick={() => table.nextPage()}
+            disabled={!table.getCanNextPage()}
+          >
+            →
+          </button>
+        </div>
+      )}
     </>
   );
 }

@@ -52,8 +52,32 @@ async function saveBg(id, file) {
 /* === GET list / single ================================================= */
 router.get("/", authenticateToken, async (_req, res) => {
   const list = await Template.findAll({
-    attributes: ["id", "name"],
+    attributes: [
+      "id",
+      "name",
+      "fields", // ← додано
+      "bgFile", // (не обов’язково – але корисно)
+      "width",
+      "height",
+    ],
     order: [["createdAt", "DESC"]],
+    paranoid: false, // щоб не показувати видалені – прибери, якщо зайве
+  });
+  res.json(list);
+});
+
+router.get("/public", async (_req, res) => {
+  const list = await Template.findAll({
+    attributes: [
+      "id",
+      "name",
+      "fields", // ← додано
+      "bgFile", // (не обов’язково – але корисно)
+      "width",
+      "height",
+    ],
+    order: [["createdAt", "DESC"]],
+    paranoid: false, // щоб не показувати видалені – прибери, якщо зайве
   });
   res.json(list);
 });
@@ -85,6 +109,7 @@ router.post(
       const tpl = await Template.create({
         id,
         name: req.body.name.trim(),
+
         fields: normFields,
         createdBy: req.user.id,
         ...extra,

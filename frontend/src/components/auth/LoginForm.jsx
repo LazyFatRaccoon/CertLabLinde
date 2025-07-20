@@ -41,6 +41,15 @@ export default function LoginForm() {
       tokenStore.set(data.accessToken);
       localStorage.setItem("token", data.accessToken);
       localStorage.setItem("user", JSON.stringify(data.user));
+      console.log("user", JSON.stringify(data.user));
+      localStorage.setItem(
+        "locations",
+        JSON.stringify(data.settings.locations || [])
+      );
+      localStorage.setItem(
+        "products",
+        JSON.stringify(data.settings.products || [])
+      );
 
       navigate("/"); // переходимо на головну
     } catch {

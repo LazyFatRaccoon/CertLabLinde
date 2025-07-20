@@ -3,26 +3,44 @@ const express = require("express");
 const router = express.Router();
 const { Analysis, AnalysisLog, Template, User } = require("../models");
 const authenticate = require("../middleware/authenticate");
+const { buildDateFilter } = require("../utils/period");
+const ExcelJS = require("exceljs"); // 👈 додаємо для експорту
+const { Op } = require("sequelize");
 
 const canEdit = (roles = []) =>
   roles.includes("manager") || roles.includes("supervisor");
 const canCreate = (roles = []) => roles.includes("lab") || canEdit(roles);
+
+const getLoc = (tpl) => {
+  const f = tpl.fields?.find(
+    (x) => x.label === "Локація" && x.type === "selectOnce"
+  );
+  return f?.options?.[0] || "Інше";
+};
+
+const getCat = (tpl) => {
+  const f = tpl.fields?.find(
+    (x) => x.label === "Продукт" && x.type === "selectOnce"
+  );
+  return f?.options?.[0] || "Інше";
+};
 
 /* ─────────────────────────
    GET /api/analyses?tpl=<id>
    ───────────────────────── */
 router.get("/", authenticate, async (req, res) => {
   try {
-    const isSupervisor = req.user?.roles?.includes("supervisor");
-    /* фільтр за шаблоном, якщо треба */
-    const where = req.query.tpl ? { templateId: req.query.tpl } : {};
+    const { period = "week", from, to, tpl } = req.query;
+
+    const where = { ...buildDateFilter({ period, from, to }) };
+
+    if (tpl) where.templateId = tpl;
 
     const includeBase = [
       { model: Template, as: "template", attributes: ["id", "name"] },
       { model: User, as: "author", attributes: ["id", "name", "email"] },
     ];
 
-    /* якщо користувач supervisor → одразу додаємо логи */
     const include = req.user.roles.includes("supervisor")
       ? [
           ...includeBase,
@@ -45,13 +63,113 @@ router.get("/", authenticate, async (req, res) => {
       where,
       include,
       order: [["createdAt", "DESC"]],
-      paranoid: !isSupervisor,
+      paranoid: !req.user.roles.includes("supervisor"),
     });
 
     res.json(list);
   } catch (err) {
     console.error("GET /analyses error:", err);
     res.status(500).json({ message: "Server error" });
+  }
+});
+function sanitizeSheetName(name) {
+  return name.replace(/[*?:\\/[\]]/g, "_").slice(0, 31);
+}
+/* ────────────────────────────────
+   GET /api/analyses/export-all
+   ──────────────────────────────── */
+router.get("/export-all", authenticate, async (req, res) => {
+  try {
+    const { from, to } = req.query;
+    const fromDate = from ? new Date(from) : null;
+    const toDate = to ? new Date(to) : null;
+
+    const templates = await Template.findAll();
+    const workbook = new ExcelJS.Workbook();
+    const allSheet = workbook.addWorksheet("Всі аналізи");
+    const sortedTemplates = [...templates].sort((a, b) =>
+      String(getLoc(a) || "").localeCompare(String(getLoc(b) || ""))
+    );
+
+    const usedNames = new Set();
+
+    for (const tpl of sortedTemplates) {
+      const location = getLoc(tpl)?.name || String(getLoc(tpl));
+      const product = getCat(tpl)?.name || String(getCat(tpl));
+      const tplName = tpl.name;
+      const rawSheetName = `${location}_${product}_${tplName}`;
+      const sheetName = sanitizeSheetName(rawSheetName);
+
+      const fields = tpl.fields.filter((f) => f.type !== "img");
+      const headers = fields.map((f) => f.label);
+
+      // ✳️ Додаємо умову фільтрації по періоду
+      const where = { templateId: tpl.id };
+      if (fromDate && toDate) {
+        where.createdAt = {
+          [Op.between]: [fromDate, toDate],
+        };
+      }
+
+      const rows = await Analysis.findAll({
+        where,
+        order: [["createdAt", "ASC"]],
+      });
+
+      // Всі аналізи
+      allSheet.addRow([]);
+      allSheet.addRow([rawSheetName]);
+      allSheet.addRow(headers);
+      for (const row of rows) {
+        const rowData = fields.map((f) => row.data?.[f.id] ?? "");
+        allSheet.addRow(rowData);
+      }
+
+      // Індивідуальний аркуш
+      let safeSheetName = sheetName;
+      let suffix = 1;
+      while (usedNames.has(safeSheetName)) {
+        safeSheetName = sanitizeSheetName(
+          `${sheetName.slice(0, 28)}_${suffix++}`
+        );
+      }
+      usedNames.add(safeSheetName);
+
+      const tplSheet = workbook.addWorksheet(safeSheetName);
+      tplSheet.addRow(headers);
+      for (const row of rows) {
+        const rowData = fields.map((f) => row.data?.[f.id] ?? "");
+        tplSheet.addRow(rowData);
+      }
+
+      // Аркуш локації
+      if (!workbook.getWorksheet(location)) {
+        workbook.addWorksheet(location);
+      }
+      const locSheet = workbook.getWorksheet(location);
+      locSheet.addRow([]);
+      locSheet.addRow([`${product}_${tplName}`]);
+      locSheet.addRow(headers);
+      for (const row of rows) {
+        const rowData = fields.map((f) => row.data?.[f.id] ?? "");
+        locSheet.addRow(rowData);
+      }
+    }
+
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename*=UTF-8''${encodeURIComponent("усі_аналізи.xlsx")}`
+    );
+
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (err) {
+    console.error("GET /analyses/export-all error:", err);
+    res.status(500).json({ message: "Помилка експорту" });
   }
 });
 
@@ -80,6 +198,7 @@ router.post("/", authenticate, async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
+
 /* ─────────────── PUT update ─────────────── */
 router.put("/:id", authenticate, async (req, res) => {
   if (!canEdit(req.user.roles)) return res.sendStatus(403);

@@ -27,10 +27,10 @@ function toDDMMYYYY(raw) {
 // body = { product, date:"DD.MM.YYYY", batch }
 //--------------------------------------------------------------------
 router.post("/certificates", async (req, res) => {
-  const { product, date, batch } = req.body || {};
+  const { templateName, date, batch } = req.body || {};
   console.log("▶️  Request body:", req.body);
 
-  if (!product || !date || !batch) {
+  if (!templateName || !date || !batch) {
     return res.status(400).json({ message: "Неповні дані" });
   }
 
@@ -49,26 +49,18 @@ router.post("/certificates", async (req, res) => {
     let analysis = null;
 
     for (const a of analyses) {
-      if (!a.template) continue; // пропускаємо "сирі" записи
+      if (!a.template || a.template.name !== templateName) continue;
 
-      // створюємо мапу  label → id   для КОЖНОГО шаблону
       const FIELD_ID = {};
       a.template.fields.forEach((f) => (FIELD_ID[f.label] = f.id));
-
       const d = a.data || {};
-      console.log(d[FIELD_ID["Продукт"]]);
-      console.log(product);
-      console.log(d[FIELD_ID["Партія"]]);
-      console.log(batch);
-      console.log(d[FIELD_ID["Дата проведення аналізу"]]);
-      console.log(date);
+
       if (
-        d[FIELD_ID["Продукт"]] === product &&
         d[FIELD_ID["Партія"]] === String(batch) &&
         toDDMMYYYY(d[FIELD_ID["Дата проведення аналізу"]]) === toDDMMYYYY(date)
       ) {
         analysis = a;
-        break; // цього досить ⇒ виходимо
+        break;
       }
     }
 
@@ -84,6 +76,10 @@ router.post("/certificates", async (req, res) => {
     //----------------------------------------------------------------
     const tpl = analysis.template;
     //const bgRel = tpl.bgFile.replace("/public/", "public/");
+
+    if (!tpl.bgFile) {
+      return res.status(400).json({ message: "Шаблон не має PDF-фону" });
+    }
     const bgAbs = path.join(
       DATA_DIR,
       tpl.bgFile.replace("/public/", "public/")

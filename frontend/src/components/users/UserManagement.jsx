@@ -3,8 +3,15 @@ import { api } from "../../api/axiosInstance";
 import UserList from "./UserList";
 import UserCreator from "./UserCreator";
 
-export default function UserManagement() {
+export default function UserManagement({ onUserUpdate }) {
   const [users, setUsers] = useState([]);
+  const [locations, setLocations] = useState([]);
+  const currentUser = JSON.parse(localStorage.getItem("user"));
+  const fetchLocations = useCallback(async () => {
+    const { data } = await api.get("/settings/locations");
+    console.log("data", { data });
+    setLocations(data);
+  }, []);
 
   const fetchUsers = useCallback(async () => {
     const { data } = await api.get("/users/");
@@ -13,7 +20,8 @@ export default function UserManagement() {
 
   useEffect(() => {
     fetchUsers();
-  }, [fetchUsers]);
+    fetchLocations(); // додаємо завантаження локацій
+  }, [fetchUsers, fetchLocations]);
 
   /* ------------------ CRUD helpers ------------------ */
   // const addChangeLog = async (action, details) => {
@@ -52,7 +60,7 @@ export default function UserManagement() {
     const original = users.find((u) => u.id === id);
     if (!original) return;
     const diff = {};
-    ["name", "roles", "location", "signature"].forEach((k) => {
+    ["name", "roles", "locationId", "signature"].forEach((k) => {
       if (JSON.stringify(draft[k]) !== JSON.stringify(original[k]))
         diff[k] = draft[k];
     });
@@ -69,8 +77,14 @@ export default function UserManagement() {
     }
     if (Object.keys(diff).length) {
       await api.put(`/users/${id}`, diff);
+
       //await addChangeLog("update", { userId: id, diff });
       fetchUsers();
+      if (currentUser?.id === id) {
+        const updated = { ...original, ...diff };
+        localStorage.setItem("user", JSON.stringify(updated));
+        if (onUserUpdate) onUserUpdate(updated);
+      }
     }
   };
 
@@ -83,8 +97,13 @@ export default function UserManagement() {
   return (
     <div className="p-6 max-w-5xl mx-auto">
       <h2 className="text-3xl font-bold mb-6">Користувачі</h2>
-      <UserList users={users} onSave={handleSave} onDelete={handleDelete} />
-      <UserCreator onCreate={handleCreate} />
+      <UserList
+        users={users}
+        onSave={handleSave}
+        onDelete={handleDelete}
+        locations={locations}
+      />
+      <UserCreator onCreate={handleCreate} locations={locations} />
     </div>
   );
 }

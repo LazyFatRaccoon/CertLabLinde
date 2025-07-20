@@ -2,7 +2,7 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
 const router = express.Router();
-const { User, UserLog } = require("../models");
+const { User, UserLog, Setting } = require("../models");
 const authenticateToken = require("../middleware/authenticate");
 const onlySupervisors = require("../middleware/onlySupervisors");
 const { sendEmail } = require("../utils/emailService");
@@ -30,10 +30,18 @@ router.post("/login", async (req, res) => {
       console.log("bcrypt.compare → false");
       return res.status(400).json({ message: "Invalid credentials" });
     }
-
+    console.log("111");
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
     refreshTokens.push(refreshToken);
+
+    const locSetting = await Setting.findOne({ where: { key: "locations" } });
+    const prodSetting = await Setting.findOne({ where: { key: "products" } });
+    console.log("locSetting", locSetting);
+    const settings = {
+      locations: Array.isArray(locSetting?.value) ? locSetting.value : [],
+      products: Array.isArray(prodSetting?.value) ? prodSetting.value : [],
+    };
 
     user.loginCount += 1;
     user.lastLogin = new Date();
@@ -54,10 +62,12 @@ router.post("/login", async (req, res) => {
         email: user.email,
         roles: user.roles,
         signature: user.signature,
-        location: user.location,
+        locationId: user.locationId,
         loginCount: user.loginCount,
         lastLogin: user.lastLogin,
+        createdAt: user.createdAt,
       },
+      settings,
     });
   } catch (err) {
     console.error("[LOGIN] ❌ error:", err);
@@ -93,7 +103,7 @@ router.get("/me", authenticateToken, async (req, res) => {
     name: user.name,
     email: user.email,
     roles: user.roles,
-    location: user.location,
+    locationId: user.locationId,
     signature: user.signature,
     loginCount: user.loginCount,
     lastLogin: user.lastLogin,
@@ -145,13 +155,20 @@ router.post(
   authenticateToken,
   onlySupervisors,
   async (req, res) => {
-    let { name, email, roles, signature, location } = req.body;
+    let { name, email, roles, signature, locationId } = req.body;
     if (typeof roles === "string") roles = JSON.parse(roles);
 
     try {
       const existingUser = await User.findOne({ where: { email } });
       if (existingUser)
         return res.status(400).json({ message: "Email already in use" });
+
+      if (!locationId) {
+        const locSetting = await Setting.findOne({
+          where: { key: "locations" },
+        });
+        locationId = locSetting?.value?.[0]?.id || "default-location";
+      }
 
       const randomPassword = crypto.randomBytes(4).toString("hex");
       const hashedPassword = await bcrypt.hash(randomPassword, 10);
@@ -162,7 +179,7 @@ router.post(
         password: hashedPassword,
         roles,
         signature: signature || "",
-        location: location || "Дніпро",
+        locationId,
         loginCount: 0,
         lastLogin: null,
       });
@@ -177,10 +194,10 @@ router.post(
           name: newUser.name,
           email: newUser.email,
           roles: newUser.roles,
-          location: newUser.location,
+          locationId: newUser.locationId,
         }),
       });
-      console.log("Sending email to:", email);
+
       await sendEmail(
         email,
         "Ваш тимчасовий пароль",

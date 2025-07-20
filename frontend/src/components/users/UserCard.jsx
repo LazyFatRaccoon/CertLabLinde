@@ -13,14 +13,14 @@ import {
 import { Trash2 } from "lucide-react";
 import FileUploader from "./FileUploader";
 
-import { rolesList, locations } from "../../constants";
+import { rolesList } from "../../constants";
 
-export default function UserCard({ user, onSave, onDelete }) {
+export default function UserCard({ user, onSave, onDelete, locations = [] }) {
   const [draft, setDraft] = useState({ ...user });
   const [file, setFile] = useState(null);
 
   const dirty = () => {
-    const keys = ["name", "roles", "location", "signature"];
+    const keys = ["name", "roles", "locationId", "signature"];
     return (
       keys.some((k) => JSON.stringify(draft[k]) !== JSON.stringify(user[k])) ||
       !!file
@@ -134,10 +134,12 @@ export default function UserCard({ user, onSave, onDelete }) {
               Локація
             </label>
             <Select
-              value={draft.location}
+              value={String(draft.locationId)}
               id={`location-${user.id}`}
               name="location"
-              onValueChange={(val) => setDraft({ ...draft, location: val })}
+              onValueChange={(val) =>
+                setDraft({ ...draft, locationId: Number(val) })
+              }
               autoComplete="off"
             >
               <SelectTrigger className="w-full">
@@ -145,8 +147,8 @@ export default function UserCard({ user, onSave, onDelete }) {
               </SelectTrigger>
               <SelectContent>
                 {locations.map((loc) => (
-                  <SelectItem key={loc} value={loc}>
-                    {loc}
+                  <SelectItem key={loc.id} value={String(loc.id)}>
+                    {loc.name}
                   </SelectItem>
                 ))}
               </SelectContent>

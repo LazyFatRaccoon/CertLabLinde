@@ -132,47 +132,23 @@ export default function TemplateCreator() {
   return (
     <div className="p-4 space-y-4">
       <h2 className="text-2xl font-bold">Створити шаблон</h2>
-
-      <input
-        type="text"
-        value={templateName}
-        onChange={(e) => setTemplateName(e.target.value)}
-        placeholder="Назва шаблону"
-        className="border p-2 rounded w-full"
-      />
-
+      <label htmlFor="templateName">
+        <input
+          id="templateName"
+          name="templateName"
+          autoComplete="off"
+          type="text"
+          value={templateName}
+          onChange={(e) => setTemplateName(e.target.value)}
+          placeholder="Назва шаблону"
+          className="border p-2 rounded w-full"
+        />
+      </label>
       <input
         type="file"
         accept=".png,.jpg,.jpeg,.pdf"
         onChange={handleImageUpload}
       />
-
-      {imagePreview && (
-        <div
-          className="relative mt-4 border inline-block"
-          onClick={handleImageClick}
-        >
-          <img
-            src={imagePreview}
-            alt="Попередній перегляд"
-            className="max-w-full"
-          />
-          {renderTestFields()}
-          {stampCoords && (
-            <img
-              src={`${PUBLIC_URL}/stamp.png`}
-              alt="Печатка"
-              className="absolute"
-              style={{
-                left: `${parseFloat(stampCoords.split(",")[0]) * 100}%`,
-                top: `${parseFloat(stampCoords.split(",")[1]) * 100}%`,
-                transform: "translate(0%, -100%)",
-                width: "100px",
-              }}
-            />
-          )}
-        </div>
-      )}
 
       {fields.map((field) => (
         <div key={field.id} className="border p-2 rounded space-y-2">
@@ -301,6 +277,32 @@ export default function TemplateCreator() {
           </button>
         </div>
       </div>
+      {imagePreview && (
+        <div
+          className="relative mt-4 border inline-block"
+          onClick={handleImageClick}
+        >
+          <img
+            src={imagePreview}
+            alt="Попередній перегляд"
+            className="max-w-full"
+          />
+          {renderTestFields()}
+          {stampCoords && (
+            <img
+              src={`${PUBLIC_URL}/stamp.png`}
+              alt="Печатка"
+              className="absolute"
+              style={{
+                left: `${parseFloat(stampCoords.split(",")[0]) * 100}%`,
+                top: `${parseFloat(stampCoords.split(",")[1]) * 100}%`,
+                transform: "translate(0%, -100%)",
+                width: "100px",
+              }}
+            />
+          )}
+        </div>
+      )}
     </div>
   );
 }

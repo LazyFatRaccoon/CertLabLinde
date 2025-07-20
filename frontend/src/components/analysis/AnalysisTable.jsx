@@ -13,7 +13,13 @@ import { getColumns } from "./columns";
 import AnalysisTableHeader from "./AnalysisTableHeader";
 import AnalysisTableBody from "./AnalysisTableBody";
 
-export default function AnalysisTable({ tpl, rows = [], setRows }) {
+export default function AnalysisTable({
+  tpl,
+  rows = [],
+  setRows,
+  setPeriodParams,
+  periodParams,
+}) {
   const user = useCurrentUser();
   const isSupervisor = user.roles.includes("supervisor");
   const canEdit = isSupervisor || user.roles.includes("manager");
@@ -22,6 +28,12 @@ export default function AnalysisTable({ tpl, rows = [], setRows }) {
   const [showLogs, setShowLogs] = useState(false);
   const [globalFilter, setGlobalFilter] = useState("");
   const [sorting, setSorting] = useState([]);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedRows, setSelectedRows] = useState([]);
+
+  const clearSelectedRows = () => {
+    setSelectedRows([]);
+  };
 
   const addDraft = () => {
     if (!mayAdd) return;
@@ -35,6 +47,7 @@ export default function AnalysisTable({ tpl, rows = [], setRows }) {
         else if (f.label === "Email") blank[f.id] = user.email || "";
         else blank[f.id] = "";
       });
+
     setRows((r) => [
       {
         id: "_draft_" + Date.now(),
@@ -42,6 +55,7 @@ export default function AnalysisTable({ tpl, rows = [], setRows }) {
         data: blank,
         isDraft: true,
         isDirty: true,
+        isEditing: true, // 👈 одразу у режимі редагування
       },
       ...r,
     ]);
@@ -91,10 +105,30 @@ export default function AnalysisTable({ tpl, rows = [], setRows }) {
     () => flattenRows({ rows, showLogs, isSupervisor }),
     [rows, showLogs, isSupervisor]
   );
-
   const columns = useMemo(
-    () => getColumns({ tpl, canEdit, setRows, saveRow, deleteRow, user }),
-    [tpl, canEdit, setRows, saveRow, deleteRow, user]
+    () =>
+      getColumns({
+        tpl,
+        canEdit,
+        setRows,
+        saveRow,
+        deleteRow,
+        user,
+        selectionMode,
+        selectedRows,
+        setSelectedRows,
+      }),
+    [
+      tpl,
+      canEdit,
+      setRows,
+      saveRow,
+      deleteRow,
+      user,
+      selectionMode,
+      selectedRows,
+      setSelectedRows,
+    ]
   );
 
   const table = useReactTable({
@@ -121,6 +155,12 @@ export default function AnalysisTable({ tpl, rows = [], setRows }) {
         setGlobalFilter={setGlobalFilter}
         mayAdd={mayAdd}
         addDraft={addDraft}
+        periodParams={periodParams}
+        setPeriodParams={setPeriodParams}
+        selectionMode={selectionMode}
+        setSelectionMode={setSelectionMode}
+        selectedRows={selectedRows}
+        clearSelectedRows={clearSelectedRows}
       />
       <AnalysisTableBody table={table} data={tableData} />
     </div>

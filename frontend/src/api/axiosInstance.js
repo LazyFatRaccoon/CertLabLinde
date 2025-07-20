@@ -36,6 +36,22 @@ api.interceptors.response.use(
       throw error;
     }
 
+    // Запобігаємо нескінченним циклам
+    if (config._retry) {
+      tokenStore.clear();
+      window.location.href = "/login";
+      return Promise.reject(error);
+    }
+    config._retry = true;
+
+    // Додаємо цей запит у чергу на повтор
+    const retryOriginalRequest = new Promise((resolve) => {
+      refreshSubscribers.push((newToken) => {
+        config.headers.Authorization = `Bearer ${newToken}`;
+        resolve(api(config));
+      });
+    });
+
     if (!isRefreshing) {
       isRefreshing = true;
       try {
@@ -46,26 +62,18 @@ api.interceptors.response.use(
         );
         tokenStore.set(data.accessToken);
         onRefreshed(data.accessToken);
-
-        //refreshSubscribers.forEach((cb) => cb(data.accessToken));
-        //refreshSubscribers = [];
       } catch (e) {
         tokenStore.clear();
         localStorage.removeItem("token");
-        localStorage.removeItem("user"); // якщо зберігаєш
-        window.location.href = "/login"; // ⬅️ кращий підхід для перенаправлення
-        throw e;
+        localStorage.removeItem("user");
+        window.location.href = "/login";
+        return Promise.reject(e);
       } finally {
         isRefreshing = false;
       }
     }
 
-    return new Promise((resolve) => {
-      refreshSubscribers.push((newToken) => {
-        config.headers.Authorization = `Bearer ${newToken}`;
-        resolve(api(config));
-      });
-    });
+    return retryOriginalRequest;
   }
 );
 
