@@ -124,7 +124,7 @@ if (process.env.NODE_ENV === "production") {
         password: hashedPassword,
         roles: ["supervisor"],
         signature: "",
-        location: defaultLocation,
+        locationId: defaultLocation,
       });
 
       console.log(
