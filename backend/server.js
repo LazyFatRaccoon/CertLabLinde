@@ -109,7 +109,7 @@ if (process.env.NODE_ENV === "production") {
       const hashedPassword = await bcrypt.hash("admin", 10);
 
       const firstLocationSetting = await Setting.findOne({
-        where: { key: "location" },
+        where: { key: "locations" },
         order: [["id", "ASC"]],
       });
 
