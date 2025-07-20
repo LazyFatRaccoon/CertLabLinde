@@ -105,18 +105,15 @@ if (process.env.NODE_ENV === "production") {
     }
     // 🔸 Створюємо admin, якщо потрібен
     const userCount = await db.User.count();
+
+    const setting = await Setting.findOne({ where: { key: "locations" } });
+    const firstLocation =
+      Array.isArray(setting?.value) && setting.value.length > 0
+        ? setting.value[0]
+        : null;
+
     if (userCount === 0) {
       const hashedPassword = await bcrypt.hash("admin", 10);
-
-      const firstLocationSetting = await Setting.findOne({
-        where: { key: "locations" },
-        order: [["id", "ASC"]],
-      });
-
-      const defaultLocation =
-        firstLocationSetting && Array.isArray(firstLocationSetting.value)
-          ? firstLocationSetting.value[0] || "Дніпро"
-          : "Дніпро";
 
       await db.User.create({
         name: "Admin",
@@ -124,12 +121,12 @@ if (process.env.NODE_ENV === "production") {
         password: hashedPassword,
         roles: ["supervisor"],
         signature: "",
-        locationId: defaultLocation,
+        locationId: firstLocation.id,
       });
 
       console.log(
         "👤 Default supervisor created with location:",
-        defaultLocation
+        firstLocation.id
       );
     }
     app.listen(PORT, () => console.log(`🌐 Server running on ${PORT}`));
