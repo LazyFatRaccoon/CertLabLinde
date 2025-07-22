@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
 import { tokenStore } from "../../api/tokenStore";
 import { API_URL } from "../../constants";
+import { SettingsContext } from "../../context/SettingsContext";
 
 export default function LoginForm() {
+  const { setSettings } = useContext(SettingsContext);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -50,6 +52,7 @@ export default function LoginForm() {
         "products",
         JSON.stringify(data.settings.products || [])
       );
+      setSettings(data.settings);
 
       navigate("/"); // переходимо на головну
     } catch {

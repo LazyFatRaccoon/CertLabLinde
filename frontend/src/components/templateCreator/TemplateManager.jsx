@@ -18,7 +18,19 @@ export default function TemplateManager({ onTemplatesUpdate }) {
       return;
     }
 
-    api.get(`/templates/${selectedId}`).then(({ data }) => setDraft(data));
+    api.get(`/templates/${selectedId}`).then(({ data }) => {
+      data.fields = data.fields.map((f) => {
+        if (
+          ["Продукт", "Локація"].includes(f.label) &&
+          f.type === "selectOnce"
+        ) {
+          const val = f.options?.[0];
+          if (typeof val === "object") return { ...f, options: [val.id] };
+        }
+        return f;
+      });
+      setDraft(data);
+    });
   }, [selectedId]);
 
   const handleSave = async (draft) => {

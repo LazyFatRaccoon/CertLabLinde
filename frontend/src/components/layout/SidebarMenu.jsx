@@ -1,12 +1,11 @@
-// SidebarMenu.jsx — оригінальна логіка + стилізація Tailwind із базовими анімаціями
-import React, { useState, useEffect, useRef } from "react";
+// SidebarMenu.jsx — оновлено: динамічне зчитування settings через Context + покращена логіка "Інші"
+import React, { useState, useEffect, useRef, useContext } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ChevronDown, ChevronRight, Settings, LogOut } from "lucide-react";
 import SettingsModal from "../layout/SettingsModal";
+import { SettingsContext } from "../../context/SettingsContext";
 
-const products = JSON.parse(localStorage.getItem("products")) || [];
-
-// Загальні класи Tailwind для повторного використання
+// Tailwind класи
 const btnBase =
   "w-full flex justify-between items-center font-semibold transition-colors duration-200 ease-in-out";
 const cls = (active) =>
@@ -14,30 +13,37 @@ const cls = (active) =>
 
 export default function SidebarMenu({ roles, onLogout, templates = [] }) {
   const user = JSON.parse(localStorage.getItem("user"));
+  const { products, locations } = useContext(SettingsContext);
 
   const getCat = (tpl) => {
     const f = tpl.fields?.find(
       (x) => x.label === "Продукт" && x.type === "selectOnce"
     );
-    return typeof f?.options?.[0] === "object"
-      ? f.options[0].name
-      : f?.options?.[0] || "Інші";
+    const id = Array.isArray(f?.options) ? f.options[0] : null;
+    const match = products.find((p) => p.id === id);
+    return match?.name || "Інші";
   };
 
   const getLoc = (tpl) => {
     const f = tpl.fields?.find(
       (x) => x.label === "Локація" && x.type === "selectOnce"
     );
-    return typeof f?.options?.[0] === "object"
-      ? f.options[0].name
-      : f?.options?.[0] || "Інше";
+    const id = Array.isArray(f?.options) ? f.options[0] : null;
+    const match = locations.find((l) => l.id === id);
+    return match?.name || "Інше";
   };
 
   const filteredTemplates =
     roles.includes("lab") &&
     !roles.includes("manager") &&
     !roles.includes("supervisor")
-      ? templates.filter((t) => getLoc(t) === user.location)
+      ? templates.filter((t) => {
+          const f = t.fields?.find(
+            (x) => x.label === "Локація" && x.type === "selectOnce"
+          );
+          const id = Array.isArray(f?.options) ? f.options[0] : null;
+          return id === user.location;
+        })
       : templates;
 
   const grouped = filteredTemplates.reduce((acc, tpl) => {
@@ -108,30 +114,29 @@ export default function SidebarMenu({ roles, onLogout, templates = [] }) {
 
   const renderGroupedTemplates = (path) => {
     return Object.entries(grouped).map(([loc, cats]) => {
-      const locName = typeof loc === "object" ? loc.name : loc;
       return (
-        <li key={locName}>
+        <li key={loc}>
           <button
             className={`${btnBase} px-3 py-2 bg-slate-800 hover:bg-slate-700 rounded-sm`}
             onClick={() =>
               setOpen((prev) => {
                 const newState = { ...prev };
-                for (const key of Object.keys(newState)) {
+                Object.keys(newState).forEach((key) => {
                   if (
                     !["journal", "templates", "users", "settings"].includes(key)
                   ) {
                     newState[key] = false;
                   }
-                }
-                newState[locName] = !prev[locName];
+                });
+                newState[loc] = !prev[loc];
                 return newState;
               })
             }
           >
-            {locName}
-            {open[locName] ? <ChevronDown /> : <ChevronRight />}
+            {loc}
+            {open[loc] ? <ChevronDown /> : <ChevronRight />}
           </button>
-          {open[locName] && (
+          {open[loc] && (
             <ul className="ml-4 space-y-1 mt-1 transition-all duration-300 ease-in-out">
               {[...products.map((p) => p.name), "Інші"].map((cat) => {
                 const arr = cats[cat] || [];
@@ -144,25 +149,24 @@ export default function SidebarMenu({ roles, onLogout, templates = [] }) {
                         setOpen((prev) => {
                           const newState = { ...prev };
                           Object.keys(newState).forEach((key) => {
-                            if (key.startsWith(`${locName}_`)) {
+                            if (key.startsWith(`${loc}_`)) {
                               newState[key] = false;
                             }
                           });
-                          newState[locName] = true;
-                          newState[`${locName}_${cat}`] =
-                            !prev[`${locName}_${cat}`];
+                          newState[loc] = true;
+                          newState[`${loc}_${cat}`] = !prev[`${loc}_${cat}`];
                           return newState;
                         })
                       }
                     >
                       {cat}
-                      {open[`${locName}_${cat}`] ? (
+                      {open[`${loc}_${cat}`] ? (
                         <ChevronDown />
                       ) : (
                         <ChevronRight />
                       )}
                     </button>
-                    {open[`${locName}_${cat}`] && (
+                    {open[`${loc}_${cat}`] && (
                       <ul className="ml-4 space-y-1 mt-1 transition-all duration-300 ease-in-out">
                         {arr.map((t) => (
                           <li key={t.id}>

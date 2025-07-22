@@ -4,10 +4,18 @@ function authenticateToken(req, res, next) {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1];
 
-  if (!token) return res.sendStatus(401);
+  console.log("🛡️ Отримано accessToken:", token);
+
+  if (!token) {
+    console.log("❌ AccessToken відсутній");
+    return res.sendStatus(401);
+  }
 
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) return res.sendStatus(403);
+    if (err) {
+      console.log("⛔ AccessToken недійсний", err.message);
+      return res.sendStatus(403);
+    }
     req.user = user;
     next();
   });

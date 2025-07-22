@@ -1,26 +1,22 @@
-import { useEffect, useState } from "react";
-import axios from "axios";
+import React, { useState, useEffect, useCallback, useContext } from "react";
+import api from "../../api/axiosInstance";
 import { Button } from "../ui/button";
 import { Pencil, Save } from "lucide-react";
 import PeriodFilterSimple from "./PeriodFilterSimple";
+import { SettingsContext } from "../../context/SettingsContext";
 
 export default function SettingsTab() {
-  const [locations, setLocations] = useState([]);
-  const [products, setProducts] = useState([]);
+  const { locations, setLocations, products, setProducts } =
+    useContext(SettingsContext);
   const [newLocation, setNewLocation] = useState("");
   const [newProduct, setNewProduct] = useState("");
   const [editing, setEditing] = useState({});
   const [tempValues, setTempValues] = useState({});
 
-  const fetchSettings = async () => {
+  const fetchSettings = useCallback(async () => {
     try {
-      const token = localStorage.getItem("token");
-      const locRes = await axios.get("/api/settings/locations", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const prodRes = await axios.get("/api/settings/products", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const locRes = await api.get("/settings/locations");
+      const prodRes = await api.get("/settings/products");
       setLocations(locRes.data);
       setProducts(prodRes.data);
       localStorage.setItem("locations", JSON.stringify(locRes.data));
@@ -28,7 +24,7 @@ export default function SettingsTab() {
     } catch (err) {
       console.error("Failed to load settings", err);
     }
-  };
+  }, [setLocations, setProducts]);
 
   useEffect(() => {
     const cachedLocations = localStorage.getItem("locations");
@@ -39,16 +35,13 @@ export default function SettingsTab() {
     } else {
       fetchSettings();
     }
-  }, []);
+  }, [fetchSettings, setLocations, setProducts]);
 
   const handleAdd = async (key, newValue) => {
     if (!newValue.trim()) return;
-    const token = localStorage.getItem("token");
-    const res = await axios.patch(
-      `/api/settings/${key}/add`,
-      { itemName: newValue.trim() },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+    const res = await api.patch(`/settings/${key}/add`, {
+      itemName: newValue.trim(),
+    });
     key === "locations" ? setLocations(res.data) : setProducts(res.data);
     key === "locations" ? setNewLocation("") : setNewProduct("");
   };
@@ -61,29 +54,30 @@ export default function SettingsTab() {
 
   const handleSave = async (key, id) => {
     const localId = `${key}-${id}`;
-    const token = localStorage.getItem("token");
-    const res = await axios.patch(
-      `/api/settings/${key}/rename`,
-      { id, newName: tempValues[localId] },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-    key === "locations" ? setLocations(res.data) : setProducts(res.data);
-    setEditing((prev) => ({ ...prev, [localId]: false }));
+    try {
+      const res = await api.patch(`/settings/${key}/rename`, {
+        id,
+        newName: tempValues[localId],
+      });
+      if (key === "locations") {
+        setLocations(res.data);
+      } else {
+        setProducts(res.data);
+      }
+      setEditing((prev) => ({ ...prev, [localId]: false }));
+      localStorage.setItem(key, JSON.stringify(res.data));
+    } catch (err) {
+      console.error("Помилка при збереженні:", err);
+    }
   };
 
   const handleDelete = async (key, id) => {
-    const token = localStorage.getItem("token");
-    const res = await axios.patch(
-      `/api/settings/${key}/remove`,
-      { id },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+    const res = await api.patch(`/settings/${key}/remove`, { id });
     key === "locations" ? setLocations(res.data) : setProducts(res.data);
   };
 
   const handleExportAll = async (period) => {
     try {
-      const token = localStorage.getItem("token");
       const plainParams = {
         ...period,
         from:
@@ -95,10 +89,9 @@ export default function SettingsTab() {
             ? period.to.toISOString().split("T")[0]
             : period.to,
       };
-      const res = await axios.get("/api/analyses/export-all", {
+      const res = await api.get("/analyses/export-all", {
         params: plainParams,
         responseType: "blob",
-        headers: { Authorization: `Bearer ${token}` },
       });
       const blob = new Blob([res.data], {
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",

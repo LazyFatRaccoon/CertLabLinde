@@ -76,13 +76,11 @@ function createSystemFields(products, locations) {
 }
 
 const normalizeSelectOptions = (raw) => {
-  if (Array.isArray(raw)) {
-    if (raw.length === 0) return [];
-    return [raw[0]];
+  if (Array.isArray(raw) && raw.length > 0) {
+    const val = raw[0];
+    return typeof val === "object" && val.id ? [val.id] : [val];
   }
-  if (typeof raw === "string") {
-    return [raw];
-  }
+  if (typeof raw === "string") return [raw];
   return [];
 };
 
@@ -208,8 +206,30 @@ export default function TemplateForm({ draft, setDraft, onSave, onDelete }) {
           <Button
             type="button"
             onClick={() => {
-              console.log("Draft перед збереженням:", draft);
-              onSave(draft);
+              const cleanedDraft = {
+                ...draft,
+                fields: draft.fields.map((f) => {
+                  if (
+                    ["Продукт", "Локація"].includes(f.label) &&
+                    f.type === "selectOnce"
+                  ) {
+                    const val = f.options?.[0];
+                    if (typeof val === "object")
+                      return { ...f, options: [val.id] };
+
+                    if (typeof val === "string") {
+                      const list =
+                        f.label === "Локація" ? rawLocations : rawProducts;
+                      const matched = list.find((item) => item.name === val);
+                      if (matched) return { ...f, options: [matched.id] };
+                    }
+                  }
+                  return f;
+                }),
+              };
+
+              console.log("Draft перед збереженням:", cleanedDraft);
+              onSave(cleanedDraft);
             }}
           >
             Зберегти

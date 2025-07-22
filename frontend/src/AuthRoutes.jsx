@@ -23,6 +23,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useAuthRedirect } from "@/hooks/useAutoRedirect";
 import { useAuth } from "@/context/AutoContext";
+import { SettingsProvider } from "@/context/SettingsContext";
 
 /* ═══════════════════════════════════════ Dashboard ══════════════════════════ */
 const Dashboard = () => {
@@ -99,13 +100,15 @@ const Dashboard = () => {
 /* ═══════════════════════════════════════ App Router ════════════════════════ */
 export default function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/login" element={<LoginForm />} />
-        <Route path="/forgot-password" element={<ForgotPasswordForm />} />
-        <Route path="/certificate" element={<CertificateRequest />} />
-        <Route path="/*" element={<Dashboard />} />
-      </Routes>
-    </Router>
+    <SettingsProvider>
+      <Router>
+        <Routes>
+          <Route path="/login" element={<LoginForm />} />
+          <Route path="/forgot-password" element={<ForgotPasswordForm />} />
+          <Route path="/certificate" element={<CertificateRequest />} />
+          <Route path="/*" element={<Dashboard />} />
+        </Routes>
+      </Router>
+    </SettingsProvider>
   );
 }

@@ -17,7 +17,6 @@ let refreshTokens = [];
 
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
-  console.log("hello");
   try {
     console.log("login attempt:", email);
     const user = await User.findOne({ where: { email } });
@@ -77,15 +76,27 @@ router.post("/login", async (req, res) => {
 
 router.post("/refresh-token", (req, res) => {
   const token = req.cookies.refreshToken;
-  if (!token) return res.sendStatus(401);
-  if (!refreshTokens.includes(token)) return res.sendStatus(403);
+  console.log("🍪 Refresh token from cookie:", token);
+
+  if (!token) {
+    console.log("🚫 Немає токена в cookie");
+    return res.sendStatus(401);
+  }
 
   verifyRefreshToken(token, async (err, decoded) => {
-    if (err) return res.sendStatus(403);
+    if (err) {
+      console.log("❌ Помилка verifyRefreshToken:", err);
+      return res.sendStatus(403);
+    }
+
     const user = await User.findByPk(decoded.id);
-    if (!user) return res.sendStatus(404);
+    if (!user) {
+      console.log("❓ User не знайдено з id:", decoded.id);
+      return res.sendStatus(404);
+    }
 
     const newAccessToken = generateAccessToken(user);
+    console.log("✅ refresh-token успішно — видаємо новий");
     res.json({ accessToken: newAccessToken });
   });
 });
