@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useContext } from "react";
 import api from "../../api/axiosInstance";
 import { Button } from "../ui/button";
-import { Pencil, Save } from "lucide-react";
+import { Pencil, Save, Trash } from "lucide-react";
 import PeriodFilterSimple from "./PeriodFilterSimple";
 import { SettingsContext } from "../../context/SettingsContext";
 
@@ -129,10 +129,10 @@ export default function SettingsTab() {
                       [localId]: e.target.value,
                     }))
                   }
-                  className="border px-2 py-1 rounded w-64"
+                  className="border px-2 py-1 rounded w-64 "
                 />
               ) : (
-                <span className="w-64 truncate border px-2 py-1 rounded">
+                <span className="w-64 truncate border px-2 py-1 rounded ">
                   {name}
                 </span>
               )}
@@ -149,7 +149,9 @@ export default function SettingsTab() {
               >
                 <Save size={16} />
               </Button>
-              <Button onClick={() => handleDelete(key, id)}>Видалити</Button>
+              <Button variant="outline" onClick={() => handleDelete(key, id)}>
+                <Trash size={16} />
+              </Button>
             </li>
           );
         })}
@@ -167,14 +169,16 @@ export default function SettingsTab() {
   );
 
   return (
-    <div className="p-4">
+    <div className="p-4 ">
       <h2 className="text-xl font-bold mb-4">Налаштування</h2>
       <div className="mb-6">
         <h3 className="text-lg font-semibold mb-2">Експорт усіх аналізів</h3>
         <PeriodFilterSimple onSubmit={handleExportAll} />
       </div>
-      {renderSettingList("locations", locations, newLocation, setNewLocation)}
-      {renderSettingList("products", products, newProduct, setNewProduct)}
+      <div className="flex flex-wrap lg:flex-nowrap gap-2">
+        {renderSettingList("locations", locations, newLocation, setNewLocation)}
+        {renderSettingList("products", products, newProduct, setNewProduct)}
+      </div>
     </div>
   );
 }

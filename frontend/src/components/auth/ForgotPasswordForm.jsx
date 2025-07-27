@@ -37,11 +37,15 @@ export default function ForgotPasswordForm() {
             required
           />
         </label>
-        {message && <p className="text-green-600 mb-2">{message}</p>}
-        {error && <p className="text-red-500 mb-2">{error}</p>}
+        {message && (
+          <p className="text-green-600 mb-2">
+            Тимчасовий пароль висланий на електронну адресу
+          </p>
+        )}
+        {error && <p className="text-red-500 mb-2">Щось пішло не так</p>}
         <button
           type="submit"
-          className="w-full bg-blue-500 text-white p-2 rounded"
+          className="w-full bg-[var(--color-bg)] hover:bg-[var(--color-hover)] text-[var(--color-text)] p-2 rounded"
         >
           Надіслати пароль
         </button>

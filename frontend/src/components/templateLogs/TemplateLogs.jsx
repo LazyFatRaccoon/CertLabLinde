@@ -12,61 +12,91 @@ import { api } from "../../api/axiosInstance";
 export default function TemplateLogs() {
   const [logs, setLogs] = useState([]);
   const [globalFilter, setGlobalFilter] = useState("");
-  const token = localStorage.getItem("token");
 
-  /* ─── fetch ─── */
   useEffect(() => {
     api
       .get("/logs/templates")
       .then((r) => setLogs(r.data))
       .catch((e) => console.error("Failed to fetch template logs", e));
-  }, [token]);
+  }, []);
 
-  /* ─── transform ─── */
   const data = useMemo(() => {
-    return logs.map((l, i) => {
-      const before = l.diff?.before || {};
-      const after = l.diff?.after || {};
-      const firstName = typeof l.diff?.name === "string" ? l.diff.name : null;
+    return logs.map((log, i) => {
+      const { action, diff = {}, editor, editorId, createdAt } = log;
 
-      /* тільки реально змінені ключі */
-      const changed = ["name", "bgFile"].filter((k) => before[k] !== after[k]);
+      const before = diff?.before ?? {};
+      const after = diff?.after ?? {};
+      const rawName = diff?.name ?? before?.name ?? after?.name;
+      const templateName = rawName || "(без назви)";
+
+      const fieldsToCheck = ["name", "bgFile", "location", "product"];
+      const changed = [];
+      const fieldChanges = [];
+
+      if (action === "update") {
+        fieldsToCheck.forEach((k) => {
+          const b = JSON.stringify(before?.[k] ?? null);
+          const a = JSON.stringify(after?.[k] ?? null);
+          if (b !== a) changed.push(k);
+        });
+
+        if (Array.isArray(after.fields)) {
+          after.fields.forEach((label) => {
+            if (!changed.includes(label)) changed.push(label);
+          });
+        }
+      }
 
       return {
         index: i + 1,
-        timestamp: new Date(l.createdAt).toLocaleString(),
-        action: l.action,
-        /* назва шаблона (для delete беремо «before») */
-        templateName:
-          l.action === "delete"
-            ? before.name || "(без назви)"
-            : l.action === "create"
-            ? firstName || "(без назви)"
-            : after.name || "(без назви)",
-        /* клас кольору для комірок */
+        timestamp: new Date(createdAt).toLocaleString(),
+        action,
+        templateName,
         color:
-          l.action === "create"
+          action === "create"
             ? "text-green-600"
-            : l.action === "delete"
+            : action === "delete"
             ? "text-red-600"
             : "",
-        /* хто редагував */
-        editorInfo: l.editor
-          ? l.editor.name || l.editor.email || `ID ${l.editor.id}`
-          : `ID ${l.editorId}`,
-        /* список змінених полів */
+        editorInfo: editor
+          ? editor.name || editor.email || `ID ${editor.id}`
+          : `ID ${editorId}`,
         fields: changed.length ? changed.join(", ") : "–",
-        /* текст «було → стало» */
-        changeLines: changed.length
-          ? changed
-              .map((k) => `${k}: ${before[k] ?? "–"} → ${after[k] ?? "–"}`)
-              .join("\n")
-          : "–",
+        changeLines:
+          action === "create" || action === "delete"
+            ? [
+                `Назва: ${diff?.name || before?.name || "–"}`,
+                `Локація: ${diff?.location || before?.location || "–"}`,
+                `Продукт: ${diff?.product || before?.product || "–"}`,
+              ].join("\n")
+            : changed.length
+            ? [
+                ...changed
+                  .filter((k) => fieldsToCheck.includes(k))
+                  .map(
+                    (k) =>
+                      `${k}: ${
+                        before?.[k] !== undefined
+                          ? JSON.stringify(before[k])
+                          : "–"
+                      } → ${
+                        after?.[k] !== undefined
+                          ? JSON.stringify(after[k])
+                          : "–"
+                      }`
+                  ),
+                ...fieldChanges.map(
+                  ({ label, before, after }) =>
+                    `Поле '${label}': ${
+                      before ? JSON.stringify(before) : "–"
+                    } → ${after ? JSON.stringify(after) : "–"}`
+                ),
+              ].join("\n")
+            : "–",
       };
     });
   }, [logs]);
 
-  /* ─── columns ─── */
   const columns = useMemo(
     () => [
       { header: "#", accessorKey: "index" },
@@ -100,7 +130,6 @@ export default function TemplateLogs() {
     []
   );
 
-  /* ─── table instance ─── */
   const table = useReactTable({
     data,
     columns,
@@ -112,25 +141,23 @@ export default function TemplateLogs() {
     getPaginationRowModel: getPaginationRowModel(),
   });
 
-  /* ─── render ─── */
   return (
-    <div className="p-4">
+    <div className="w-full">
       <h2 className="text-2xl font-bold mb-4">Журнал змін шаблонів</h2>
-      <label htmlFor="search">
-        <input
-          id="search"
-          name="search"
-          value={globalFilter ?? ""}
-          onChange={(e) => setGlobalFilter(e.target.value)}
-          placeholder="Пошук..."
-          className="mb-4 border p-2 rounded w-full"
-        />
-      </label>
+      <input
+        value={globalFilter ?? ""}
+        onChange={(e) => setGlobalFilter(e.target.value)}
+        placeholder="Пошук..."
+        className="mb-4 border p-2 rounded w-full"
+      />
       <div className="overflow-x-auto">
-        <table className="table-auto w-full border">
+        <table className="table-auto w-full">
           <thead>
             {table.getHeaderGroups().map((hg) => (
-              <tr key={hg.id} className="bg-gray-100">
+              <tr
+                key={hg.id}
+                className="bg-[var(--color-bg)] text-[var(--color-text)]"
+              >
                 {hg.headers.map((h) => (
                   <th
                     key={h.id}
@@ -139,21 +166,23 @@ export default function TemplateLogs() {
                   >
                     {flexRender(h.column.columnDef.header, h.getContext())}
                     {h.column.getIsSorted() === "asc"
-                      ? " 🔼"
+                      ? " ▲"
                       : h.column.getIsSorted() === "desc"
-                      ? " 🔽"
+                      ? " ▼"
                       : ""}
                   </th>
                 ))}
               </tr>
             ))}
           </thead>
-
           <tbody>
             {table.getRowModel().rows.map((row) => (
               <tr key={row.id}>
                 {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} className="border px-2 py-1 align-top">
+                  <td
+                    key={cell.id}
+                    className="border px-2 py-1 align-top border-[var(--color-text)]"
+                  >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
                 ))}
@@ -161,7 +190,6 @@ export default function TemplateLogs() {
             ))}
           </tbody>
         </table>
-
         <div className="flex justify-between mt-4">
           <button
             onClick={() => table.previousPage()}

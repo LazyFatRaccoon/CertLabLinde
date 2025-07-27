@@ -35,7 +35,7 @@ export default function StampUploader() {
 
   return (
     <div className="p-4 space-y-4">
-      <h2 className="text-2xl font-bold">Печатка підприємства</h2>
+      <h2 className="text-2xl font-bold ">Печатка підприємства</h2>
       <FileUploader
         key={refreshKey}
         accept={["image/png"]}

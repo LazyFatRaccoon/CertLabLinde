@@ -18,9 +18,15 @@ router.get("/templates", authenticateToken, async (req, res) => {
   try {
     const list = await TemplateLog.findAll({
       include: [
-        { model: Template, as: "template", attributes: ["id", "name"] },
+        {
+          model: Template,
+          as: "template",
+          attributes: ["id", "name"],
+          paranoid: false,
+        },
         { model: User, as: "editor", attributes: ["id", "name", "email"] },
       ],
+
       order: [["createdAt", "DESC"]],
     });
 

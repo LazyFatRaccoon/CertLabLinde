@@ -42,9 +42,7 @@ export default function UserCreator({ onCreate, locations = [] }) {
     e.preventDefault();
     if (!valid) return alert("Email та хоча б одна роль обов'язкові");
     try {
-      await onCreate(form, file); // ⬅️ дочекаймося, поки бекенд усе зробить
-
-      // 🔄 обнуляємо форму й файл
+      await onCreate(form, file);
       setForm({
         name: "",
         email: "",
@@ -61,12 +59,12 @@ export default function UserCreator({ onCreate, locations = [] }) {
   };
 
   return (
-    <Card className="mt-8">
+    <Card className="mt-2 ">
       <CardContent className="space-y-4 py-6">
         <h3 className="text-xl font-semibold">Створити користувача</h3>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid md:grid-cols-2 gap-4">
-            <label htmlFor="newName">
+            <label htmlFor="newName" className="w-full">
               <Input
                 id="newName"
                 name="newName"
@@ -76,7 +74,7 @@ export default function UserCreator({ onCreate, locations = [] }) {
                 autoComplete="off"
               />
             </label>
-            <label htmlFor="newEmail">
+            <label htmlFor="newEmail" className="w-full">
               <Input
                 id="newEmail"
                 name="newEmail"
@@ -87,7 +85,7 @@ export default function UserCreator({ onCreate, locations = [] }) {
                 autoComplete="off"
               />
             </label>
-            <label htmlFor="newLocation">
+            <label htmlFor="newLocation" className="w-full">
               <Select
                 id="newLocation"
                 name="newLocation"
@@ -109,46 +107,46 @@ export default function UserCreator({ onCreate, locations = [] }) {
               </Select>
             </label>
           </div>
+          <div className="w-full flex flex-wrap justify-between">
+            <div className="space-y-1">
+              <div className="font-medium">Ролі</div>
+              <div className="flex gap-4 flex-wrap">
+                {rolesList.map((role) => (
+                  <label
+                    key={role}
+                    className="flex items-center gap-1"
+                    htmlFor={`newRole-${role}`}
+                  >
+                    <Checkbox
+                      id={`newRole-${role}`}
+                      name="newRole"
+                      checked={form.roles.includes(role)}
+                      onCheckedChange={() => toggleRole(role)}
+                    />
+                    {role}
+                  </label>
+                ))}
+              </div>
+            </div>
 
-          <div className="space-y-1">
-            <div className="font-medium">Ролі</div>
-            <div className="flex gap-4 flex-wrap">
-              {rolesList.map((role) => (
-                <label
-                  key={role}
-                  className="flex items-center gap-1"
-                  htmlFor={`newRole-${role}`}
-                >
-                  <Checkbox
-                    id={`newRole-${role}`}
-                    name="newRole"
-                    checked={form.roles.includes(role)}
-                    onCheckedChange={() => toggleRole(role)}
-                  />
-                  {role}
-                </label>
-              ))}
+            <div className="space-y-1">
+              <div className="font-medium">Підпис</div>
+              <FileUploader
+                key={uploaderKey}
+                accept={["image/png"]}
+                initialUrl=""
+                onChange={(f) => {
+                  setFile(f);
+                  if (f) {
+                    const emailPrefix = form.email.split("@")[0];
+                    setForm({ ...form, signature: `${emailPrefix}Stamp.png` });
+                  } else {
+                    setForm({ ...form, signature: "" });
+                  }
+                }}
+              />
             </div>
           </div>
-
-          <div className="space-y-1">
-            <div className="font-medium">Підпис</div>
-            <FileUploader
-              key={uploaderKey}
-              accept={["image/png"]}
-              initialUrl=""
-              onChange={(f) => {
-                setFile(f);
-                if (f) {
-                  const emailPrefix = form.email.split("@")[0];
-                  setForm({ ...form, signature: `${emailPrefix}Stamp.png` });
-                } else {
-                  setForm({ ...form, signature: "" });
-                }
-              }}
-            />
-          </div>
-
           <Button type="submit" disabled={!valid}>
             Створити
           </Button>

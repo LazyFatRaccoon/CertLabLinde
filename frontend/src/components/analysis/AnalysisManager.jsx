@@ -117,7 +117,7 @@ export default function AnalysisManager() {
 
   /* ─────────── render ─────────────────────────────────────────── */
   return (
-    <div className="flex h-full">
+    <div className="flex h-full w-full">
       {loading ? (
         <div className="flex-1 flex items-center justify-center text-gray-500">
           Завантаження…

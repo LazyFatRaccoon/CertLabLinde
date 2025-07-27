@@ -1,12 +1,18 @@
 import React from "react";
 
 /* Base select */
-export function Select({ value, onValueChange, children, className = "", ...rest }) {
+export function Select({
+  value,
+  onValueChange,
+  children,
+  className = "",
+  ...rest
+}) {
   return (
     <select
       value={value}
       onChange={(e) => onValueChange(e.target.value)}
-      className={`w-full rounded border border-gray-300 p-2 focus:border-blue-500 focus:outline-none ${className}`}
+      className={`w-full rounded border  bg-[var(--color-bg2)] text-[var(--color-text2)] p-2 focus:border-[var(--color-primary)] focus:outline-none ${className}`}
       {...rest}
     >
       {children}
@@ -14,7 +20,6 @@ export function Select({ value, onValueChange, children, className = "", ...rest
   );
 }
 
-/* Stub components to keep current JSX intact */
 export function SelectTrigger({ children }) {
   return children;
 }

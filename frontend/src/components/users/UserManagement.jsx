@@ -95,8 +95,8 @@ export default function UserManagement({ onUserUpdate }) {
   };
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
-      <h2 className="text-3xl font-bold mb-6">Користувачі</h2>
+    <div className="p-2 pt-8 w-full max-w-5xl mx-auto">
+      <h2 className="text-3xl font-bold mb-6 ">Користувачі</h2>
       <UserList
         users={users}
         onSave={handleSave}

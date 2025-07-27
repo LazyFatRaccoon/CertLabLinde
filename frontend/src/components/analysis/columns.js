@@ -23,9 +23,6 @@ export function getColumns({
     enableSorting: false,
     cell: ({ row }) => {
       const r = row.original;
-      console.log("🔍 [checkbox] Rendering row.original:", r); // ← Лог для перевірки
-
-      // Рендеримо чекбокс лише для основного запису
       if (!r || r.type !== "main" || r.isDeleted) return null;
 
       const checked = selectedRows.includes(r.id);
@@ -40,7 +37,7 @@ export function getColumns({
                 checked ? prev.filter((id) => id !== r.id) : [...prev, r.id]
               );
             }}
-            className="w-4 h-4"
+            className="w-4 h-4 accent-[var(--color-primary)]"
           />
         </div>
       );
@@ -180,9 +177,9 @@ export function getColumns({
                 variant={r.isEditing ? "secondary" : "outline"}
                 className={
                   r.isDraft
-                    ? "bg-blue-800 pointer-events-none"
+                    ? "bg-[var(--color-primary)] pointer-events-none"
                     : r.isEditing
-                    ? "bg-blue-800"
+                    ? "bg-[var(--color-primary)]"
                     : ""
                 }
                 onClick={() =>

@@ -22,8 +22,9 @@ import { api } from "@/api/axiosInstance";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useAuthRedirect } from "@/hooks/useAutoRedirect";
-import { useAuth } from "@/context/AutoContext";
+import { useAuth } from "@/context/AuthContext";
 import { SettingsProvider } from "@/context/SettingsContext";
+import { ThemeProvider } from "@/context/ThemeContext";
 
 /* ═══════════════════════════════════════ Dashboard ══════════════════════════ */
 const Dashboard = () => {
@@ -56,10 +57,9 @@ const Dashboard = () => {
   if (!token || !user) return <Navigate to="/login" />;
 
   return (
-    <div className="flex items-start h-screen ">
+    <div className="flex items-start h-screen overflow-auto bg-[var(--color-bg2)] rounded-xl  p-2 ">
       {/* ─── SidebarMenu ─── */}
       <SidebarMenu
-        roles={user.roles}
         onLogout={handleLogout}
         templates={templates}
         user={user}
@@ -67,7 +67,9 @@ const Dashboard = () => {
       />
 
       {/* ─── Main content ─── */}
-      <div className="flex-1 ml-64 p-4 overflow-y-auto">
+      <div
+        className={`flex w-full ml-64 bg-[var(--color-bg2)] text-[var(--color-text2)]`}
+      >
         <Routes>
           <Route
             path="/template"
@@ -91,7 +93,6 @@ const Dashboard = () => {
           <Route path="/certificate" element={<CertificateRequest />} />
           <Route path="/" element={<div>Вітаємо, {user.name}!</div>} />
         </Routes>
-        <ToastContainer position="top-right" autoClose={3000} />
       </div>
     </div>
   );
@@ -99,16 +100,30 @@ const Dashboard = () => {
 
 /* ═══════════════════════════════════════ App Router ════════════════════════ */
 export default function App() {
+  useEffect(() => {
+    const handleStorage = (e) => {
+      if (e.key === "user" && e.newValue === null) {
+        // Користувач вийшов у іншій вкладці
+        window.location.href = "/login"; // або setUser(null);
+      }
+    };
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, []);
+
   return (
-    <SettingsProvider>
-      <Router>
-        <Routes>
-          <Route path="/login" element={<LoginForm />} />
-          <Route path="/forgot-password" element={<ForgotPasswordForm />} />
-          <Route path="/certificate" element={<CertificateRequest />} />
-          <Route path="/*" element={<Dashboard />} />
-        </Routes>
-      </Router>
-    </SettingsProvider>
+    <ThemeProvider>
+      <SettingsProvider>
+        <Router>
+          <Routes>
+            <Route path="/login" element={<LoginForm />} />
+            <Route path="/forgot-password" element={<ForgotPasswordForm />} />
+            <Route path="/certificate" element={<CertificateRequest />} />
+            <Route path="/*" element={<Dashboard />} />
+          </Routes>
+          <ToastContainer position="top-right" autoClose={2000} />
+        </Router>
+      </SettingsProvider>
+    </ThemeProvider>
   );
 }

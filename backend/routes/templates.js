@@ -6,13 +6,35 @@ const fs = require("fs");
 const sharp = require("sharp");
 const { v4: uuid } = require("uuid");
 
-const { Template, TemplateLog } = require("../models");
+const { Template, TemplateLog, Setting } = require("../models");
 const authenticateToken = require("../middleware/authenticate");
 const onlySupervisors = require("../middleware/onlySupervisors");
 const { normalizeField } = require("../utils/normalizeField");
 const normalizeA4 = require("../utils/normalizeA4");
 
 const upload = multer({ storage: multer.memoryStorage() });
+
+async function getSettingMap(key) {
+  const setting = await Setting.findOne({ where: { key } });
+  const entries = setting?.value || [];
+  return Object.fromEntries(entries.map((x) => [x.id, x.name]));
+}
+
+async function extractMeta(fields) {
+  const loc = fields.find((f) => f.label === "Локація" && f.options?.length);
+  const prod = fields.find((f) => f.label === "Продукт" && f.options?.length);
+
+  const locationMap = await getSettingMap("locations");
+  const productMap = await getSettingMap("products");
+
+  const locationId = Number(loc?.options?.[0]);
+  const productId = Number(prod?.options?.[0]);
+
+  return {
+    location: locationMap[locationId] || null,
+    product: productMap[productId] || null,
+  };
+}
 
 /* ---------- helper: save bg & return meta ---------- */
 async function saveBg(id, file) {
@@ -61,7 +83,8 @@ router.get("/", authenticateToken, async (_req, res) => {
       "height",
     ],
     order: [["createdAt", "DESC"]],
-    paranoid: false, // щоб не показувати видалені – прибери, якщо зайве
+    paranoid: true,
+    //paranoid: false, // щоб не показувати видалені – прибери, якщо зайве
   });
   res.json(list);
 });
@@ -77,7 +100,7 @@ router.get("/public", async (_req, res) => {
       "height",
     ],
     order: [["createdAt", "DESC"]],
-    paranoid: false, // щоб не показувати видалені – прибери, якщо зайве
+    //paranoid: false, // щоб не показувати видалені – прибери, якщо зайве
   });
   res.json(list);
 });
@@ -102,28 +125,27 @@ router.post(
       const id = uuid();
       const rawFields = JSON.parse(req.body.fields || "[]");
       const normFields = rawFields.map(normalizeField);
-
-      // ── фон
+      const meta = await extractMeta(normFields);
       const extra = req.file ? await saveBg(id, req.file) : {};
 
       const tpl = await Template.create({
         id,
         name: req.body.name.trim(),
-
         fields: normFields,
         createdBy: req.user.id,
         ...extra,
       });
-
-      const tplData = tpl.toJSON();
 
       await TemplateLog.create({
         templateId: tpl.id,
         editorId: req.user.id,
         action: "create",
         diff: {
-          name: tplData.name,
-          bgFile: tplData.bgFile,
+          name: tpl.name,
+          bgFile: tpl.bgFile,
+          location: meta.location,
+          product: meta.product,
+          fields: normFields.map((f) => f.label),
         },
       });
 
@@ -135,7 +157,6 @@ router.post(
   }
 );
 
-/* === PUT update ======================================================== */
 router.put(
   "/:id",
   authenticateToken,
@@ -147,26 +168,62 @@ router.put(
       if (!tpl) return res.status(404).json({ message: "Не знайдено" });
 
       const before = tpl.toJSON();
+      console.log("before", before);
+      const beforeMeta = await extractMeta(before.fields);
 
-      // назва
       if (req.body.name !== undefined) tpl.name = req.body.name.trim();
-
-      // поля
       if (req.body.fields !== undefined) {
         tpl.fields = JSON.parse(req.body.fields).map(normalizeField);
       }
-
-      // фон
       if (req.file) Object.assign(tpl, await saveBg(tpl.id, req.file));
 
       tpl.updatedBy = req.user.id;
       await tpl.save();
 
+      const after = tpl.toJSON();
+      console.log("after", after);
+      const afterMeta = await extractMeta(after.fields);
+
+      const changedFields = [];
+      const beforeFields = before.fields.filter(
+        (f) => f.label !== "Локація" && f.label !== "Продукт"
+      );
+      const afterFields = after.fields.filter(
+        (f) => f.label !== "Локація" && f.label !== "Продукт"
+      );
+      const labelSet = new Set([
+        ...beforeFields.map((f) => f.label),
+        ...afterFields.map((f) => f.label),
+      ]);
+
+      for (const label of labelSet) {
+        const b = beforeFields.find((f) => f.label === label);
+        const a = afterFields.find((f) => f.label === label);
+        if (JSON.stringify(b) !== JSON.stringify(a)) {
+          changedFields.push(label);
+        }
+      }
+      console.log("Змінені поля:", changedFields);
       await TemplateLog.create({
         templateId: tpl.id,
         editorId: req.user.id,
         action: "update",
-        diff: { before, after: tpl.toJSON() },
+        diff: {
+          before: {
+            name: before.name,
+            bgFile: before.bgFile,
+            location: beforeMeta.location,
+            product: beforeMeta.product,
+            fields: changedFields,
+          },
+          after: {
+            name: after.name,
+            bgFile: after.bgFile,
+            location: afterMeta.location,
+            product: afterMeta.product,
+            fields: changedFields,
+          },
+        },
       });
 
       res.json(tpl);
@@ -177,19 +234,32 @@ router.put(
   }
 );
 
-/* === DELETE (soft) ===================================================== */
 router.delete("/:id", authenticateToken, onlySupervisors, async (req, res) => {
-  const tpl = await Template.findByPk(req.params.id);
-  if (!tpl) return res.status(404).json({ message: "Не знайдено" });
+  try {
+    const tpl = await Template.findByPk(req.params.id);
+    if (!tpl) return res.status(404).json({ message: "Не знайдено" });
 
-  await tpl.destroy(); // paranoid → sets deletedAt
-  await TemplateLog.create({
-    templateId: tpl.id,
-    editorId: req.user.id,
-    action: "delete",
-    diff: null,
-  });
-  res.sendStatus(204);
+    const meta = await extractMeta(tpl.fields);
+
+    await TemplateLog.create({
+      templateId: tpl.id,
+      editorId: req.user.id,
+      action: "delete",
+      diff: {
+        name: tpl.name,
+        location: meta.location,
+        product: meta.product,
+        fields: tpl.fields.map((f) => f.label),
+        bgFile: tpl.bgFile,
+      },
+    });
+
+    await tpl.destroy();
+    res.sendStatus(204);
+  } catch (e) {
+    console.error("DELETE /templates →", e);
+    res.status(500).json({ message: "Server error" });
+  }
 });
 
 module.exports = router;

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-toastify";
-import { Input } from "@/components/ui/input";
+
 import { Button } from "@/components/ui/button";
 import DatePicker from "@/components/ui/datepicker";
 import { tokenStore } from "@/api/tokenStore";
@@ -90,62 +90,77 @@ export default function CertificateRequest() {
   };
 
   return (
-    <div className="max-w-md m-20 mx-auto p-6 space-y-4">
-      <h1 className="text-2xl font-bold mb-2">Замовити сертифікат</h1>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label htmlFor="template">Шаблон</label>
-          <select
-            id="template"
-            name="template"
-            className="w-full border p-2 rounded"
-            value={form.templateName}
-            onChange={(e) => setForm({ ...form, templateName: e.target.value })}
-          >
-            {templates.map((name) => (
-              <option key={name} value={name}>
-                {name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label htmlFor="datepicker">Дата</label>
-          <DatePicker
-            id="datepicker"
-            name="datepicker"
-            value={form.date}
-            onChange={(d) => setForm({ ...form, date: d })}
+    <>
+      <div className="h-20  bg-[#002d54] flex items-center px-20">
+        <div className="  shadow-md">
+          <img
+            src="/linde-logo-desktop.avif"
+            alt="Linde Logo"
+            className=" h-22 shadow-md"
           />
         </div>
+      </div>
+      <div className="max-w-md m-20 mx-auto p-6 space-y-4  text-[var(--color-bg)] rounded ">
+        <h1 className="text-2xl font-bold mb-2">Замовити сертифікат</h1>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="template">Назва газу або рідини</label>
+            <select
+              id="template"
+              name="template"
+              className="w-full border p-2 rounded bg-[var(--color-bg2)] text-[var(--color-text2)] hover:border-[var(--color-primary)] transition-colors"
+              value={form.templateName}
+              onChange={(e) =>
+                setForm({ ...form, templateName: e.target.value })
+              }
+            >
+              {templates.map((name) => (
+                <option key={name} value={name}>
+                  {name}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        <div>
-          <label htmlFor="batchNumber">Партія</label>
-          <Input
-            id="batchNumber"
-            name="batchNumber"
-            autoComplete="off"
-            value={form.batch}
-            onChange={(e) => setForm({ ...form, batch: e.target.value })}
-          />
-        </div>
+          <div>
+            <label htmlFor="datepicker">Дата аналізу</label>
+            <DatePicker
+              id="datepicker"
+              name="datepicker"
+              value={form.date}
+              className="border rounded pl-2 pr-14 py-2 bg-[var(--color-bg2)] text-[var(--color-text2)] cursor-pointer select-none hover:border-[var(--color-primary)] transition-colors"
+              onChange={(d) => setForm({ ...form, date: d })}
+            />
+          </div>
 
-        <Button disabled={loading}>
-          {loading ? "Пошук…" : "Запросити сертифікат"}
-        </Button>
+          <div className="pb-4">
+            <label htmlFor="batchNumber">№ Партії або номер продукції</label>
+            <input
+              id="batchNumber"
+              name="batchNumber"
+              className="w-full rounded border p-2 focus:border-[var(--color-primary)] focus:outline-none bg-[var(--color-bg2)] text-[var(--color-text2)] hover:border-[var(--color-primary)] transition-colors"
+              autoComplete="off"
+              value={form.batch}
+              onChange={(e) => setForm({ ...form, batch: e.target.value })}
+            />
+          </div>
 
-        {isLoggedIn && (
-          <Button
-            type="button"
-            variant="outline"
-            className="absolute left-4 top-4"
-            onClick={() => navigate("/login")}
-          >
-            Назад до входу
+          <Button disabled={loading}>
+            {loading ? "Пошук…" : "Запит сертифікату якості"}
           </Button>
-        )}
-      </form>
-    </div>
+
+          {isLoggedIn && (
+            <Button
+              type="button"
+              variant="outline"
+              className="absolute left-4 top-4"
+              onClick={() => navigate("/login")}
+            >
+              Назад до входу
+            </Button>
+          )}
+        </form>
+      </div>
+    </>
   );
 }

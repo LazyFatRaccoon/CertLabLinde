@@ -96,11 +96,11 @@ export default function PeriodFilter({ onChange, initial }) {
   };
 
   return (
-    <div className="flex items-center gap-3 flex-wrap">
+    <div className="flex text-md items-center gap-3 flex-wrap">
       <select
         value={period}
         onChange={(e) => setPeriod(e.target.value)}
-        className="border px-2 py-1 rounded"
+        className="border px-2 py-2 rounded bg-[var(--color-bg)] text-[var(--color-text)] hover:bg-[var(--color-hover)]"
       >
         {options.map((o) => (
           <option key={o.value} value={o.value}>
@@ -119,7 +119,7 @@ export default function PeriodFilter({ onChange, initial }) {
           <DatePicker fullWidth={false} value={to} onChange={handleToChange} />
           {rangeDirty && (
             <button
-              className="bg-blue-600 text-white p-1 rounded hover:bg-blue-700"
+              className="bg-[var(--color-primary)] text-[var(--color-text)] p-2 rounded hover:bg-[var(--color-hover)]"
               onClick={handleRangeSubmit}
             >
               <RefreshCw />

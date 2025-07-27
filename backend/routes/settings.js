@@ -24,8 +24,27 @@ async function updateArraySetting(key, newValue, res) {
     return res.status(500).json({ message: "Помилка оновлення" });
   }
 }
+router.get("/map", async (req, res) => {
+  try {
+    const [locSetting, prodSetting] = await Promise.all([
+      Setting.findOne({ where: { key: "locations" } }),
+      Setting.findOne({ where: { key: "products" } }),
+    ]);
 
-router.get("/locations", authenticateToken, async (req, res) => {
+    const locations = {};
+    const products = {};
+
+    locSetting?.value?.forEach((l) => (locations[l.id] = l.name));
+    prodSetting?.value?.forEach((p) => (products[p.id] = p.name));
+
+    res.json({ locations, products });
+  } catch (err) {
+    console.error("GET /settings/map error:", err);
+    res.status(500).json({ message: "Помилка отримання мапи імен" });
+  }
+});
+
+router.get("/locations", async (req, res) => {
   try {
     const setting = await Setting.findOne({ where: { key: "locations" } });
     res.json(setting ? setting.value : []);
@@ -35,7 +54,7 @@ router.get("/locations", authenticateToken, async (req, res) => {
   }
 });
 
-router.get("/products", authenticateToken, async (req, res) => {
+router.get("/products", async (req, res) => {
   try {
     const setting = await Setting.findOne({ where: { key: "products" } });
     res.json(setting ? setting.value : []);

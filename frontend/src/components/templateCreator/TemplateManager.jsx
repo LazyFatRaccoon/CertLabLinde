@@ -81,7 +81,7 @@ export default function TemplateManager({ onTemplatesUpdate }) {
   };
 
   return (
-    <div className="flex h-full">
+    <div className="flex h-full w-full bg-[var(--color-bg2)]">
       {draft ? (
         <TemplateForm
           draft={draft}
@@ -90,7 +90,7 @@ export default function TemplateManager({ onTemplatesUpdate }) {
           onDelete={deleteTemplate}
         />
       ) : (
-        <div className="flex-1 flex items-center justify-center">
+        <div className="flex-1 flex items-center justify-center text-[var(--color-text2)]">
           Оберіть шаблон або створіть новий у боковому меню.
         </div>
       )}

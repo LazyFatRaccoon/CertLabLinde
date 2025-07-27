@@ -73,7 +73,7 @@ export default function PeriodFilterSimple({ onSubmit }) {
       <select
         value={period}
         onChange={(e) => setPeriod(e.target.value)}
-        className="border px-2 py-1 rounded"
+        className="border px-2 py-2 rounded text-md bg-[var(--color-bg)] text-[var(--color-text)] border-gray-300 dark:border-gray-500"
       >
         {options.map((o) => (
           <option key={o.value} value={o.value}>
@@ -90,10 +90,10 @@ export default function PeriodFilterSimple({ onSubmit }) {
       )}
 
       <button
-        className="bg-blue-600 text-white p-1 rounded hover:bg-blue-700"
         onClick={handleSubmit}
+        className="p-2 rounded bg-[var(--color-primary)] text-[var(--color-text)] hover:bg-[var(--color-hover)]"
       >
-        <RefreshCw />
+        <RefreshCw className="w-6 h-6" />
       </button>
     </div>
   );

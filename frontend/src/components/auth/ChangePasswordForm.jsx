@@ -31,7 +31,7 @@ export default function ChangePasswordForm() {
   };
 
   return (
-    <div className="max-w-sm mx-auto p-4 bg-white rounded-xl shadow-md">
+    <div className="max-w-sm mx-auto p-4 bg-[var(--color-bg2)] rounded-xl shadow-md">
       <h2 className="text-xl font-bold mb-4">Зміна пароля</h2>
       <form onSubmit={handleSubmit}>
         <label htmlFor="oldPassword">
@@ -42,7 +42,7 @@ export default function ChangePasswordForm() {
             placeholder="Старий пароль"
             value={oldPassword}
             onChange={(e) => setOldPassword(e.target.value)}
-            className="w-full p-2 mb-2 border rounded"
+            className="w-full p-2 mb-2 border rounded bg-[var(--color-bg2)] text-[var(--color-text2)] "
             autoComplete="new-password"
             required
           />
@@ -55,16 +55,18 @@ export default function ChangePasswordForm() {
             placeholder="Новий пароль"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
-            className="w-full p-2 mb-2 border rounded"
+            className="w-full p-2 mb-2 border rounded bg-[var(--color-bg2)] text-[var(--color-text2)] "
             autoComplete="new-password"
             required
           />
         </label>
-        {message && <p className="text-green-600 mb-2">{message}</p>}
-        {error && <p className="text-red-500 mb-2">{error}</p>}
+        {message && (
+          <p className="text-green-600 mb-2">Пароль успішно змінено</p>
+        )}
+        {error && <p className="text-red-500 mb-2">Шось пішло не так</p>}
         <button
           type="submit"
-          className="w-full bg-blue-500 text-white p-2 rounded"
+          className="w-full bg-[var(--color-bg)] hover:bg-[var(--color-hover)] text-[var(--color-text)] p-2 rounded"
         >
           Змінити пароль
         </button>

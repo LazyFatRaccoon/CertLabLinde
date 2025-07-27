@@ -1,7 +1,7 @@
 // routes/analyses.js
 const express = require("express");
 const router = express.Router();
-const { Analysis, AnalysisLog, Template, User } = require("../models");
+const { Analysis, AnalysisLog, Template, User, Setting } = require("../models");
 const authenticate = require("../middleware/authenticate");
 const { buildDateFilter } = require("../utils/period");
 const ExcelJS = require("exceljs"); // 👈 додаємо для експорту
@@ -84,18 +84,38 @@ router.get("/export-all", authenticate, async (req, res) => {
     const fromDate = from ? new Date(from) : null;
     const toDate = to ? new Date(to) : null;
 
-    const templates = await Template.findAll();
+    // 🔧 Внутрішня функція для мапінгу
+    async function getSettingMap(key) {
+      const setting = await Setting.findOne({ where: { key } });
+      const entries = setting?.value || [];
+      return Object.fromEntries(entries.map((x) => [x.id, x.name]));
+    }
+
+    // 🗺️ Отримуємо карти імен
+    const [templates, locationMap, productMap] = await Promise.all([
+      Template.findAll(),
+      getSettingMap("locations"),
+      getSettingMap("products"),
+    ]);
+
     const workbook = new ExcelJS.Workbook();
     const allSheet = workbook.addWorksheet("Всі аналізи");
-    const sortedTemplates = [...templates].sort((a, b) =>
-      String(getLoc(a) || "").localeCompare(String(getLoc(b) || ""))
-    );
+
+    const sortedTemplates = [...templates].sort((a, b) => {
+      const locA = locationMap[getLoc(a)] || "";
+      const locB = locationMap[getLoc(b)] || "";
+      return locA.localeCompare(locB);
+    });
 
     const usedNames = new Set();
+    const locationSheets = {};
 
-    for (const tpl of sortedTemplates) {
-      const location = getLoc(tpl)?.name || String(getLoc(tpl));
-      const product = getCat(tpl)?.name || String(getCat(tpl));
+    // Паралельна обробка кожного шаблону
+    const analysisPromises = sortedTemplates.map(async (tpl) => {
+      const locationId = getLoc(tpl);
+      const productId = getCat(tpl);
+      const location = locationMap[locationId] || String(locationId);
+      const product = productMap[productId] || String(productId);
       const tplName = tpl.name;
       const rawSheetName = `${location}_${product}_${tplName}`;
       const sheetName = sanitizeSheetName(rawSheetName);
@@ -103,12 +123,9 @@ router.get("/export-all", authenticate, async (req, res) => {
       const fields = tpl.fields.filter((f) => f.type !== "img");
       const headers = fields.map((f) => f.label);
 
-      // ✳️ Додаємо умову фільтрації по періоду
       const where = { templateId: tpl.id };
       if (fromDate && toDate) {
-        where.createdAt = {
-          [Op.between]: [fromDate, toDate],
-        };
+        where.createdAt = { [Op.between]: [fromDate, toDate] };
       }
 
       const rows = await Analysis.findAll({
@@ -142,11 +159,14 @@ router.get("/export-all", authenticate, async (req, res) => {
         tplSheet.addRow(rowData);
       }
 
-      // Аркуш локації
-      if (!workbook.getWorksheet(location)) {
-        workbook.addWorksheet(location);
+      // Локаційний аркуш
+      if (!locationSheets[location]) {
+        locationSheets[location] = {
+          sheet: workbook.addWorksheet(location),
+          products: {},
+        };
       }
-      const locSheet = workbook.getWorksheet(location);
+      const locSheet = locationSheets[location].sheet;
       locSheet.addRow([]);
       locSheet.addRow([`${product}_${tplName}`]);
       locSheet.addRow(headers);
@@ -154,7 +174,24 @@ router.get("/export-all", authenticate, async (req, res) => {
         const rowData = fields.map((f) => row.data?.[f.id] ?? "");
         locSheet.addRow(rowData);
       }
-    }
+
+      // Продукт в межах локації
+      if (!locationSheets[location].products[product]) {
+        const prodSheetName = sanitizeSheetName(`${location}_${product}`);
+        locationSheets[location].products[product] =
+          workbook.addWorksheet(prodSheetName);
+      }
+      const prodSheet = locationSheets[location].products[product];
+      prodSheet.addRow([]);
+      prodSheet.addRow([tplName]);
+      prodSheet.addRow(headers);
+      for (const row of rows) {
+        const rowData = fields.map((f) => row.data?.[f.id] ?? "");
+        prodSheet.addRow(rowData);
+      }
+    });
+
+    await Promise.all(analysisPromises);
 
     res.setHeader(
       "Content-Type",

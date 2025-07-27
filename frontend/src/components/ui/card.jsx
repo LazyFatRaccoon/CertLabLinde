@@ -2,10 +2,7 @@ import React from "react";
 
 export function Card({ className = "", children, ...rest }) {
   return (
-    <div
-      {...rest}
-      className={`rounded-xl border border-gray-200 bg-white shadow-sm ${className}`}
-    >
+    <div {...rest} className={`rounded-xl border shadow-sm ${className}`}>
       {children}
     </div>
   );

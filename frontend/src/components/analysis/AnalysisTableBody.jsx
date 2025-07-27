@@ -7,7 +7,6 @@ export default function AnalysisTableBody({ table, data }) {
   const sortId = sorting?.id;
   const desc = sorting?.desc;
 
-  // Отримати значення для сортування з колонки
   const getSortValue = (row) => {
     const cell = row.getAllCells().find((c) => c.column.id === sortId);
     return cell?.getValue?.();
@@ -20,7 +19,6 @@ export default function AnalysisTableBody({ table, data }) {
     );
   };
 
-  // Розділити на батьківські та дочірні рядки
   const parents = [];
   const childrenMap = new Map();
 
@@ -39,10 +37,9 @@ export default function AnalysisTableBody({ table, data }) {
     }
   });
 
-  // Спроба привести значення до дати або числа для сортування
   const parseValue = (val) => {
     if (typeof val !== "string") return val;
-    const dateMatch = val.match(/^\d{2}\.\d{2}\.\d{4}$/);
+    const dateMatch = val.match(/\d{2}\.\d{2}\.\d{4}/);
     if (dateMatch) {
       const [day, month, year] = val.split(".").map(Number);
       return new Date(year, month - 1, day);
@@ -51,7 +48,6 @@ export default function AnalysisTableBody({ table, data }) {
     return isNaN(numberVal) ? val : numberVal;
   };
 
-  // Сортування батьків
   if (sortId) {
     parents.sort((a, b) => {
       const aVal = parseValue(getSortValue(a));
@@ -63,7 +59,6 @@ export default function AnalysisTableBody({ table, data }) {
     });
   }
 
-  // Об'єднати батьків і дітей у правильному порядку
   const sortedRows = [];
   parents.forEach((parent) => {
     sortedRows.push(parent);
@@ -74,18 +69,18 @@ export default function AnalysisTableBody({ table, data }) {
     );
     sortedRows.push(...children);
   });
-  //console.log(table.getAllColumns().map((col) => col.id));
+
   return (
     <>
       <div className="overflow-auto border rounded">
-        <table className="table-auto w-full text-sm">
-          <thead className="bg-gray-50 sticky top-0">
+        <table className=" table-auto w-full text-sm">
+          <thead className=" bg-[var(--color-bg)] text-[var(--color-text)] sticky top-0">
             {table.getHeaderGroups().map((hg) => (
               <tr key={hg.id}>
                 {hg.headers.map((h) => (
                   <th
                     key={h.id}
-                    className="border px-2 py-1 cursor-pointer select-none"
+                    className="border border-[var(--color-tableBorder)] px-2 py-1 cursor-pointer select-none"
                     onClick={h.column.getToggleSortingHandler()}
                   >
                     {flexRender(h.column.columnDef.header, h.getContext())}
@@ -141,10 +136,7 @@ export default function AnalysisTableBody({ table, data }) {
                       className="border px-1 py-0.5 align-middle text-center"
                     >
                       <div className="flex justify-center items-center h-full">
-                        {(() => {
-                          console.log("🔍 Cell", { content });
-                          return content;
-                        })()}
+                        {content}
                       </div>
                     </td>
                   );
@@ -155,7 +147,6 @@ export default function AnalysisTableBody({ table, data }) {
         </table>
       </div>
 
-      {/* pagination */}
       {table.getPageCount() > 1 && (
         <div className="flex justify-between items-center mt-2">
           <button

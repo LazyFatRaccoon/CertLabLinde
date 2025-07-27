@@ -145,7 +145,7 @@ export default function AnalysisTable({
   useEffect(() => table.setPageSize(50), [table]);
 
   return (
-    <div className="p-4">
+    <div className="w-full">
       <AnalysisTableHeader
         tpl={tpl}
         isSupervisor={isSupervisor}

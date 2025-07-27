@@ -14,16 +14,13 @@ export default function UserLogs() {
   const [globalFilter, setGlobalFilter] = useState("");
   const token = localStorage.getItem("token");
 
-  /* helpers */
   const cleanEmail = (email = "") => email.split("#deleted_")[0];
   const isDeleted = (email = "") => email.includes("#deleted_");
 
-  /* fetch */
   useEffect(() => {
     api.get("/logs/users").then((r) => setLogs(r.data));
   }, [token]);
 
-  /* transform */
   const data = useMemo(() => {
     return logs.map((l, i) => {
       const oldObj = JSON.parse(l.oldValue || "{}");
@@ -33,10 +30,7 @@ export default function UserLogs() {
       const changeLines = filteredKeys
         .map((k) => `${k}: ${oldObj[k] ?? "-"} → ${newObj[k] ?? "-"}`)
         .join("\n");
-      const fields =
-        l.action === "create"
-          ? "" // нічого не показуємо
-          : filteredKeys.join(",");
+      const fields = l.action === "create" ? "" : filteredKeys.join(",");
 
       const editorEmailRaw = l.editor?.email ?? "unknown";
       const targetEmailRaw = l.target?.email ?? "unknown";
@@ -60,7 +54,6 @@ export default function UserLogs() {
     });
   }, [logs]);
 
-  /* columns */
   const columns = useMemo(
     () => [
       { header: "#", accessorKey: "index" },
@@ -71,7 +64,7 @@ export default function UserLogs() {
         cell: ({ row }) => {
           const isDel = row.original.action === "delete";
           const cls = isDel
-            ? "text-red-600"
+            ? "text-red-500"
             : row.original.action === "create"
             ? "text-green-600"
             : "";
@@ -84,7 +77,7 @@ export default function UserLogs() {
         cell: ({ row }) => {
           const isDel = row.original.action === "delete";
           const cls = isDel
-            ? "text-red-600"
+            ? "text-red-500"
             : row.original.action === "create"
             ? "text-green-600"
             : "";
@@ -100,7 +93,7 @@ export default function UserLogs() {
         header: "Зміни",
         accessorKey: "changeLines",
         cell: ({ getValue }) => (
-          <div style={{ whiteSpace: "pre-line" }}>{getValue()}</div>
+          <div className="whitespace-pre-line text-sm ">{getValue()}</div>
         ),
       },
     ],
@@ -118,9 +111,8 @@ export default function UserLogs() {
     getPaginationRowModel: getPaginationRowModel(),
   });
 
-  /* render */
   return (
-    <div className="p-4">
+    <div className="p-4 ">
       <h2 className="text-2xl font-bold mb-4">Журнал змін користувачів</h2>
       <label htmlFor="search">
         <input
@@ -129,27 +121,32 @@ export default function UserLogs() {
           value={globalFilter ?? ""}
           onChange={(e) => setGlobalFilter(e.target.value)}
           placeholder="Пошук..."
-          className="mb-4 border p-2 rounded w-full"
+          className="mb-4 border  p-2 rounded w-full"
           autoComplete="off"
         />
       </label>
       <div className="overflow-x-auto">
-        <table className="table-auto w-full border">
+        <table className="table-auto w-full ">
           <thead>
             {table.getHeaderGroups().map((hg) => (
-              <tr key={hg.id} className="bg-gray-100">
+              <tr
+                key={hg.id}
+                className=" border border-[var(--color-bg)] bg-[var(--color-bg)] text-[var(--color-text)]"
+              >
                 {hg.headers.map((h) => (
                   <th
                     key={h.id}
-                    className="border px-2 py-1 cursor-pointer"
+                    className=" px-2 py-1 cursor-pointer text-left"
                     onClick={h.column.getToggleSortingHandler()}
                   >
-                    {flexRender(h.column.columnDef.header, h.getContext())}
-                    {h.column.getIsSorted() === "asc"
-                      ? " 🔼"
-                      : h.column.getIsSorted() === "desc"
-                      ? " 🔽"
-                      : ""}
+                    <div className="flex items-center gap-1">
+                      {flexRender(h.column.columnDef.header, h.getContext())}
+                      {h.column.getIsSorted() === "asc" ? (
+                        <span className="text-[var(--color-accent)]">▲</span>
+                      ) : h.column.getIsSorted() === "desc" ? (
+                        <span className="text-[var(--color-accent)]">▼</span>
+                      ) : null}
+                    </div>
                   </th>
                 ))}
               </tr>
@@ -157,9 +154,12 @@ export default function UserLogs() {
           </thead>
           <tbody>
             {table.getRowModel().rows.map((row) => (
-              <tr key={row.id}>
+              <tr key={row.id} className="even:bg-[var(--color-bg-light)]">
                 {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} className="border px-2 py-1 align-top">
+                  <td
+                    key={cell.id}
+                    className="border border-[var(--color-text)]  px-2 py-1 align-top"
+                  >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
                 ))}
@@ -172,7 +172,7 @@ export default function UserLogs() {
           <button
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
-            className="px-4 py-2 bg-gray-300 rounded disabled:opacity-50"
+            className="px-4 py-2 bg-[var(--color-secondary)] rounded disabled:opacity-50"
           >
             Назад
           </button>
@@ -183,7 +183,7 @@ export default function UserLogs() {
           <button
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
-            className="px-4 py-2 bg-gray-300 rounded disabled:opacity-50"
+            className="px-4 py-2 bg-[var(--color-secondary)] rounded disabled:opacity-50"
           >
             Вперед
           </button>

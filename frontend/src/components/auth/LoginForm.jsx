@@ -5,6 +5,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { tokenStore } from "../../api/tokenStore";
 import { API_URL } from "../../constants";
 import { SettingsContext } from "../../context/SettingsContext";
+import ForgotPasswordForm from "./ForgotPasswordForm"; // імпортуй компонент
 
 export default function LoginForm() {
   const { setSettings } = useContext(SettingsContext);
@@ -12,9 +13,9 @@ export default function LoginForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [showForgot, setShowForgot] = useState(false); // 🔹 новий стан
 
   const navigate = useNavigate();
-
   useEffect(() => {
     const token = localStorage.getItem("token");
     try {
@@ -61,65 +62,98 @@ export default function LoginForm() {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded shadow">
-      <h2 className="text-2xl font-bold mb-4">Вхід</h2>
-      {error && <p className="text-red-500 mb-4">{error}</p>}
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label htmlFor="email" className="block">
-            Email
-          </label>
-          <input
-            type="email"
-            id="email"
-            name="email"
-            className="w-full border p-2 rounded"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
+    <>
+      <div className="h-20 bg-[#002d54] flex items-center px-20">
+        <div className="shadow-md">
+          <img
+            src="/linde-logo-desktop.avif"
+            alt="Linde Logo"
+            className="h-22 shadow-md"
           />
         </div>
-        <div>
-          <label htmlFor="password" className="block">
-            Пароль
-          </label>
-          <div className="relative">
-            <input
-              id="password"
-              name="password"
-              type={showPassword ? "text" : "password"}
-              className="w-full border p-2 rounded pr-10"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="new-password"
-              required
-            />
+      </div>
+
+      <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded shadow relative transition-all duration-300">
+        {showForgot ? (
+          <>
+            <ForgotPasswordForm />
             <button
-              type="button"
-              className="absolute right-2 top-2"
-              onClick={() => setShowPassword(!showPassword)}
+              className="mt-4 text-blue-600 hover:underline"
+              onClick={() => setShowForgot(false)}
             >
-              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              ← Повернутись до входу
             </button>
-          </div>
-        </div>
-        <button
-          type="submit"
-          className="w-full bg-blue-600 text-white py-2 rounded"
-        >
-          Увійти
-        </button>
-        <div className="text-center mt-4">
-          <Link to="/forgot-password" className="text-blue-600 hover:underline">
-            Забули пароль?
-          </Link>
-        </div>
-        <div className="text-center mt-4">
-          <Link to="/certificate" className="text-blue-600 hover:underline">
-            Замовити сертифікат
-          </Link>
-        </div>
-      </form>
-    </div>
+          </>
+        ) : (
+          <>
+            <h2 className="text-2xl font-bold mb-4">Вхід</h2>
+            {error && <p className="text-red-500 mb-4">{error}</p>}
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label htmlFor="email" className="block">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  className="w-full border p-2 rounded"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="password" className="block">
+                  Пароль
+                </label>
+                <div className="relative">
+                  <input
+                    id="password"
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    className="w-full border p-2 rounded pr-10"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    autoComplete="new-password"
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-2 top-2"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
+              </div>
+              <button
+                type="submit"
+                className="w-full bg-[#002d54] text-white py-2 rounded"
+              >
+                Увійти
+              </button>
+              <div className="text-center mt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowForgot(true)}
+                  className="text-blue-600 hover:underline"
+                >
+                  Забули пароль?
+                </button>
+              </div>
+              <div className="text-center mt-4">
+                <Link
+                  to="/certificate"
+                  className="text-blue-600 hover:underline"
+                >
+                  Замовити сертифікат
+                </Link>
+              </div>
+            </form>
+          </>
+        )}
+      </div>
+    </>
   );
 }
