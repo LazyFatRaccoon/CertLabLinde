@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Абсолютний шлях до цієї директорії
+# Абсолютний шлях до цієї директорії (де розміщено скрипт)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Шлях до rclone
@@ -17,16 +17,17 @@ if [ ! -f "$RCLONE" ]; then
   chmod +x ./rclone_tmp/rclone
   mv ./rclone_tmp/rclone ./rclone
   rm -rf rclone_tmp rclone-current-linux-amd64.zip rclone-*-linux-amd64
-  cd -
+  cd - > /dev/null
 fi
 
+# Формуємо дату
 DATE=$(date +%F)
 ARCHIVE_PATH="/tmp/backup_$DATE.tar.gz"
 LOG_FILE="/tmp/backup_log.txt"
 
 echo "🔄 Backup started: $DATE" >> "$LOG_FILE"
 
-# Перевіряємо існування папки
+# Перевіряємо існування папки /var/data
 if [ -d /var/data ]; then
   echo "✅ /var/data found. Creating archive..." >> "$LOG_FILE"
   tar -czf "$ARCHIVE_PATH" /var/data
@@ -36,10 +37,14 @@ else
   exit 1
 fi
 
-# Завантажуємо на Google Drive
+# Завантаження в Google Drive
 if [ -f "$ARCHIVE_PATH" ]; then
   echo "☁ Uploading to Google Drive..." >> "$LOG_FILE"
-  "$RCLONE" --config /etc/secrets/RCLONE_CONF copy "$ARCHIVE_PATH" backupdrive:/certlab_backups/
+  "$RCLONE" \
+    --config /etc/secrets/RCLONE_CONF \
+    --cache-dir /tmp \
+    --no-update-modtime \
+    copy "$ARCHIVE_PATH" backupdrive:/certlab_backups/ >> "$LOG_FILE" 2>&1
   echo "✅ Upload complete." >> "$LOG_FILE"
   rm "$ARCHIVE_PATH"
 else
