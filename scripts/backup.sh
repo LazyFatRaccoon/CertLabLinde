@@ -1,5 +1,13 @@
 #!/bin/bash
 
+if [ ! -f "./scripts/rclone" ]; then
+  echo "rclone не знайдено — завантажую..."
+  curl -O https://downloads.rclone.org/rclone-current-linux-amd64.zip
+  unzip -o rclone-current-linux-amd64.zip
+  mv rclone-*-linux-amd64/rclone ./scripts/rclone
+  chmod +x ./scripts/rclone
+fi
+
 DATE=$(date +%F)
 ARCHIVE_PATH="/tmp/backup_$DATE.tar.gz"
 LOG_FILE="/tmp/backup_log.txt"
