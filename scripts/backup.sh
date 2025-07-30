@@ -1,17 +1,22 @@
 #!/bin/bash
 
+# Абсолютний шлях до цієї директорії
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-RCLONE="$SCRIPT_DIR/rclone/rclone"
+# Шлях до rclone
+RCLONE="$SCRIPT_DIR/rclone"
 
+# Перевірка наявності rclone
 if [ ! -f "$RCLONE" ]; then
-  echo "rclone не знайдено — завантажую..."
+  echo "🔄 rclone не знайдено — завантажую..."
   cd "$SCRIPT_DIR"
-  curl -O https://downloads.rclone.org/rclone-current-linux-amd64.zip
+  curl -sO https://downloads.rclone.org/rclone-current-linux-amd64.zip
   unzip -o rclone-current-linux-amd64.zip
-  mv rclone-*-linux-amd64/rclone ./rclone/rclone
-  chmod +x ./rclone/rclone
-  rm -rf rclone-current-linux-amd64.zip rclone-*-linux-amd64
+  mkdir -p rclone_tmp
+  mv rclone-*-linux-amd64/rclone ./rclone_tmp/
+  chmod +x ./rclone_tmp/rclone
+  mv ./rclone_tmp/rclone ./rclone
+  rm -rf rclone_tmp rclone-current-linux-amd64.zip rclone-*-linux-amd64
   cd -
 fi
 
