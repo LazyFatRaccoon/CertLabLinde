@@ -1,0 +1,4 @@
+cron:
+  - name: daily-backup
+    schedule: "@daily"
+    command: bash scripts/backup.sh

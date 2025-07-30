@@ -10,6 +10,7 @@ const analysesRoutes = require("./analyses");
 const publicRoutes = require("./public");
 const settingsRoutes = require("./settings");
 const exportCertificatesZipRoutes = require("./exportCertificatesZip");
+const backupRoutes = require("./backup");
 
 const router = express.Router();
 
@@ -24,5 +25,6 @@ router.use("/logs", logsTemplatesRoutes);
 router.use("/analyses", analysesRoutes);
 router.use("/public", publicRoutes);
 router.use("", exportCertificatesZipRoutes);
+router.use("/backup", backupRoutes);
 
 module.exports = router;

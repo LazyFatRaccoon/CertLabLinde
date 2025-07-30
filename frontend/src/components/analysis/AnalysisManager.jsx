@@ -4,6 +4,7 @@ import { api } from "@/api/axiosInstance";
 //import AnalysisList from "./AnalysisList";
 import AnalysisTable from "./AnalysisTable";
 import { toast } from "react-toastify";
+import { useLoading } from "@/context/LoaderContext";
 
 //import axios from "axios";
 // <AnalysisList
@@ -25,7 +26,9 @@ export default function AnalysisManager() {
   const [selectedId, setSelectedId] = useState(null);
   const [tpl, setTpl] = useState(null);
   const [rows, setRows] = useState([]);
-  const [loading, setLoading] = useState(false);
+
+  const { setLoading } = useLoading();
+  //const [loading, setLoading] = useState(false);
   const [periodParams, setPeriodParams] = useState(() => {
     try {
       const raw = localStorage.getItem("analysisPeriodParams");
@@ -65,28 +68,32 @@ export default function AnalysisManager() {
   }, [selectedId]);
 
   /* ─────────── api helpers ─────────────────────────────────────── */
-  const fetchTplAndRows = useCallback(async (id, params) => {
-    if (!id) return;
-    currentIdRef.current = id;
-    setLoading(true);
-    try {
-      const [{ data: fullTpl }, { data: list }] = await Promise.all([
-        api.get(`/templates/${id}`),
-        api.get("/analyses", {
-          params:
-            typeof params === "string"
-              ? { tpl: id, period: params }
-              : { tpl: id, ...params },
-        }),
-      ]);
-      setTpl(fullTpl);
-      setRows(list);
-    } catch {
-      toast.error("Помилка завантаження даних");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const fetchTplAndRows = useCallback(
+    async (id, params) => {
+      if (!id) return;
+      currentIdRef.current = id;
+      setLoading(true);
+
+      try {
+        const [{ data: fullTpl }, { data: list }] = await Promise.all([
+          api.get(`/templates/${id}`),
+          api.get("/analyses", {
+            params:
+              typeof params === "string"
+                ? { tpl: id, period: params }
+                : { tpl: id, ...params },
+          }),
+        ]);
+        setTpl(fullTpl);
+        setRows(list);
+      } catch {
+        toast.error("Помилка завантаження даних");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [setLoading]
+  );
 
   /* ─────────── first load: templates ───────────────────────────── */
   useEffect(() => {
@@ -118,11 +125,7 @@ export default function AnalysisManager() {
   /* ─────────── render ─────────────────────────────────────────── */
   return (
     <div className="flex h-full w-full">
-      {loading ? (
-        <div className="flex-1 flex items-center justify-center text-gray-500">
-          Завантаження…
-        </div>
-      ) : tpl ? (
+      {tpl ? (
         <AnalysisTable
           tpl={tpl}
           rows={rows}

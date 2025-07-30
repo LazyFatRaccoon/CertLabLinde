@@ -68,7 +68,7 @@ export default function LoginForm() {
           <img
             src="/linde-logo-desktop.avif"
             alt="Linde Logo"
-            className="h-22 shadow-md"
+            className="h-22 mt-4 shadow-md"
           />
         </div>
       </div>

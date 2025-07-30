@@ -4,7 +4,7 @@ function authenticateToken(req, res, next) {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1];
 
-  console.log("🛡️ Отримано accessToken:", token);
+  //console.log("🛡️ Отримано accessToken:", token);
 
   if (!token) {
     console.log("❌ AccessToken відсутній");

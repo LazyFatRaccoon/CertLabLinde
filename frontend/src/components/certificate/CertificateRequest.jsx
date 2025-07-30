@@ -6,6 +6,7 @@ import { toast } from "react-toastify";
 import { Button } from "@/components/ui/button";
 import DatePicker from "@/components/ui/datepicker";
 import { tokenStore } from "@/api/tokenStore";
+import { useLoading } from "../../context/LoaderContext";
 
 const todayUi = () =>
   new Date().toLocaleDateString("uk-UA").replace(/\//g, ".");
@@ -18,12 +19,14 @@ export default function CertificateRequest() {
     date: todayUi(),
     batch: "",
   });
-  const [loading, setLoading] = useState(false);
+  const { setLoading } = useLoading();
+  const [loading2, setLoading2] = useState(false);
   const navigate = useNavigate();
   const isLoggedIn = !!tokenStore.get();
 
   useEffect(() => {
     const fetchTemplates = async () => {
+      setLoading(true);
       try {
         const { data } = await axios.get("/api/templates/public");
         setAllTemplates(data);
@@ -41,17 +44,21 @@ export default function CertificateRequest() {
         if (unique.length) {
           setForm((prev) => ({ ...prev, templateName: unique[0] }));
         }
+        console.log("1");
       } catch (err) {
         toast.error("Не вдалося завантажити шаблони");
+      } finally {
+        setLoading(false);
       }
     };
     fetchTemplates();
-  }, []);
+  }, [setLoading]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.batch.trim()) return toast.error("Вкажіть партію");
     setLoading(true);
+    setLoading2(true);
     try {
       const tpl = allTemplates.find((t) => t.name === form.templateName);
       if (!tpl) return toast.error("Шаблон не знайдено");
@@ -86,6 +93,7 @@ export default function CertificateRequest() {
       }
     } finally {
       setLoading(false);
+      setLoading2(false);
     }
   };
 
@@ -96,7 +104,7 @@ export default function CertificateRequest() {
           <img
             src="/linde-logo-desktop.avif"
             alt="Linde Logo"
-            className=" h-22 shadow-md"
+            className=" h-22 mt-4 shadow-md"
           />
         </div>
       </div>
@@ -145,15 +153,15 @@ export default function CertificateRequest() {
             />
           </div>
 
-          <Button disabled={loading}>
-            {loading ? "Пошук…" : "Запит сертифікату якості"}
+          <Button disabled={loading2}>
+            {loading2 ? "Пошук…" : "Запит сертифікату якості"}
           </Button>
 
           {isLoggedIn && (
             <Button
               type="button"
               variant="outline"
-              className="absolute left-4 top-4"
+              className="absolute right-4 top-24"
               onClick={() => navigate("/login")}
             >
               Назад до входу

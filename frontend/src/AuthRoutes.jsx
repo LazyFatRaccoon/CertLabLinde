@@ -25,6 +25,7 @@ import { useAuthRedirect } from "@/hooks/useAutoRedirect";
 import { useAuth } from "@/context/AuthContext";
 import { SettingsProvider } from "@/context/SettingsContext";
 import { ThemeProvider } from "@/context/ThemeContext";
+import { LoadingProvider } from "@/context/LoaderContext";
 
 /* ═══════════════════════════════════════ Dashboard ══════════════════════════ */
 const Dashboard = () => {
@@ -114,15 +115,17 @@ export default function App() {
   return (
     <ThemeProvider>
       <SettingsProvider>
-        <Router>
-          <Routes>
-            <Route path="/login" element={<LoginForm />} />
-            <Route path="/forgot-password" element={<ForgotPasswordForm />} />
-            <Route path="/certificate" element={<CertificateRequest />} />
-            <Route path="/*" element={<Dashboard />} />
-          </Routes>
-          <ToastContainer position="top-right" autoClose={2000} />
-        </Router>
+        <LoadingProvider>
+          <Router>
+            <Routes>
+              <Route path="/login" element={<LoginForm />} />
+              <Route path="/forgot-password" element={<ForgotPasswordForm />} />
+              <Route path="/certificate" element={<CertificateRequest />} />
+              <Route path="/*" element={<Dashboard />} />
+            </Routes>
+            <ToastContainer position="top-right" autoClose={2000} />
+          </Router>
+        </LoadingProvider>
       </SettingsProvider>
     </ThemeProvider>
   );

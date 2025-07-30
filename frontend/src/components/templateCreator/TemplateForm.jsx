@@ -104,14 +104,16 @@ export default function TemplateForm({ draft, setDraft, onSave, onDelete }) {
 
   useEffect(() => {
     if (!draft.id && draft.fields.length === 0) {
-      setDraft((d) => {
-        const filled = {
-          ...d,
-          fields: createSystemFields(rawProducts, rawLocations),
-        };
-        setInitialDraft(filled);
-        return filled;
-      });
+      setTimeout(() => {
+        setDraft((d) => {
+          const filled = {
+            ...d,
+            fields: createSystemFields(rawProducts, rawLocations),
+          };
+          setInitialDraft(filled);
+          return filled;
+        });
+      }, 0);
     } else {
       setInitialDraft(draft);
     }
