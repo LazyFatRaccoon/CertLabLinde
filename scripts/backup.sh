@@ -1,11 +1,18 @@
 #!/bin/bash
 
-if [ ! -f "./scripts/rclone" ]; then
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+RCLONE="$SCRIPT_DIR/rclone/rclone"
+
+if [ ! -f "$RCLONE" ]; then
   echo "rclone не знайдено — завантажую..."
+  cd "$SCRIPT_DIR"
   curl -O https://downloads.rclone.org/rclone-current-linux-amd64.zip
   unzip -o rclone-current-linux-amd64.zip
-  mv rclone-*-linux-amd64/rclone ./scripts/rclone
-  chmod +x ./scripts/rclone
+  mv rclone-*-linux-amd64/rclone ./rclone/rclone
+  chmod +x ./rclone/rclone
+  rm -rf rclone-current-linux-amd64.zip rclone-*-linux-amd64
+  cd -
 fi
 
 DATE=$(date +%F)
@@ -27,7 +34,7 @@ fi
 # Завантажуємо на Google Drive
 if [ -f "$ARCHIVE_PATH" ]; then
   echo "☁ Uploading to Google Drive..." >> "$LOG_FILE"
-  ./scripts/rclone --config /etc/secrets/rclone.conf copy "$ARCHIVE_PATH" backupdrive:/certlab_backups/
+  "$RCLONE" --config /etc/secrets/rclone.conf copy "$ARCHIVE_PATH" backupdrive:/certlab_backups/
   echo "✅ Upload complete." >> "$LOG_FILE"
   rm "$ARCHIVE_PATH"
 else
