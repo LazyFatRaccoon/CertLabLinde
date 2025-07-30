@@ -39,7 +39,7 @@ fi
 # Завантажуємо на Google Drive
 if [ -f "$ARCHIVE_PATH" ]; then
   echo "☁ Uploading to Google Drive..." >> "$LOG_FILE"
-  "$RCLONE" --config /etc/secrets/rclone.conf copy "$ARCHIVE_PATH" backupdrive:/certlab_backups/
+  "$RCLONE" --config /etc/secrets/RCLONE_CONF copy "$ARCHIVE_PATH" backupdrive:/certlab_backups/
   echo "✅ Upload complete." >> "$LOG_FILE"
   rm "$ARCHIVE_PATH"
 else
