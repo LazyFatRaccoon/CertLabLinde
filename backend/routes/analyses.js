@@ -1,7 +1,14 @@
 // routes/analyses.js
 const express = require("express");
 const router = express.Router();
-const { Analysis, AnalysisLog, Template, User, Setting } = require("../models");
+const {
+  Analysis,
+  AnalysisLog,
+  Template,
+  User,
+  Setting,
+  Counter,
+} = require("../models");
 const authenticate = require("../middleware/authenticate");
 const { buildDateFilter } = require("../utils/period");
 const ExcelJS = require("exceljs"); // 👈 додаємо для експорту
@@ -24,6 +31,28 @@ const getCat = (tpl) => {
   );
   return f?.options?.[0] || "Інше";
 };
+
+async function getNextAnalysisNumber() {
+  const [counter] = await Counter.findOrCreate({
+    where: { key: "analysisNumber" },
+    defaults: { value: 1 },
+  });
+
+  counter.value += 1;
+  await counter.save();
+
+  return counter.value;
+}
+
+router.post("/new", async (req, res) => {
+  try {
+    const number = await getNextAnalysisNumber();
+    return res.json({ number });
+  } catch (err) {
+    console.error("❌ Помилка при отриманні номеру", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
 
 /* ─────────────────────────
    GET /api/analyses?tpl=<id>

@@ -26,7 +26,16 @@ function createSystemFields(products, locations) {
       demo: "",
       x: 0,
       y: 0,
-      size: 200,
+      size: 120,
+    },
+    {
+      id: crypto.randomUUID(),
+      label: "№ аналізу",
+      type: "calc",
+      fixed: true,
+      demo: "1235",
+      x: 0,
+      y: 0,
     },
     {
       id: crypto.randomUUID(),
@@ -46,6 +55,7 @@ function createSystemFields(products, locations) {
       x: 0,
       y: 0,
     },
+
     {
       id: crypto.randomUUID(),
       label: "Партія",
@@ -152,7 +162,6 @@ export default function TemplateForm({ draft, setDraft, onSave, onDelete }) {
     setDraft((d) => ({
       ...d,
       fields: [
-        ...d.fields,
         {
           id: crypto.randomUUID(),
           label: "Нове поле",
@@ -160,6 +169,7 @@ export default function TemplateForm({ draft, setDraft, onSave, onDelete }) {
           x: 0,
           y: 0,
         },
+        ...d.fields,
       ],
     }));
 

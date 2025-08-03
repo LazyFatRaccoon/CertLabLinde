@@ -35,8 +35,16 @@ export default function AnalysisTable({
     setSelectedRows([]);
   };
 
-  const addDraft = () => {
+  const addDraft = async () => {
     if (!mayAdd) return;
+    const res = await fetch("/api/analyses/new", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    const { number } = await res.json();
+
     const blank = {};
     tpl.fields
       .filter((f) => f.type !== "img")
@@ -45,6 +53,7 @@ export default function AnalysisTable({
           blank[f.id] = new Date().toLocaleDateString("uk-UA");
         else if (f.label === "Аналіз провів") blank[f.id] = user.name || "";
         else if (f.label === "Email") blank[f.id] = user.email || "";
+        else if (f.label === "№ аналізу") blank[f.id] = String(number);
         else blank[f.id] = "";
       });
 

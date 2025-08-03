@@ -45,10 +45,6 @@ export default function FieldTable({ fields, onChange, onSetActive }) {
   const toggle = (id, key) =>
     update(id, { [key]: !fields.find((f) => f.id === id)[key] });
 
-  const sorted = [...fields].sort((a, b) =>
-    a.fixed === b.fixed ? 0 : a.fixed ? 1 : -1
-  );
-
   return (
     <>
       <div className="overflow-auto border rounded">
@@ -93,7 +89,7 @@ export default function FieldTable({ fields, onChange, onSetActive }) {
             </tr>
           </thead>
           <tbody>
-            {sorted.map((f, visIdx) => {
+            {fields.map((f, visIdx) => {
               const fixed = f.fixed;
               const sizeVal =
                 f.type === "img" ? f.size ?? 100 : f.fontSize ?? 16;
@@ -254,7 +250,7 @@ export default function FieldTable({ fields, onChange, onSetActive }) {
                   <td className="border px-1">
                     {f.type === "img" ? null : f.type === "select" ? (
                       <Select
-                        value={f.demo || ""}
+                        value={f.demo || f.options?.[0] || ""}
                         onValueChange={(val) => update(f.id, { demo: val })}
                         className="border-none"
                       >
@@ -340,7 +336,23 @@ export default function FieldTable({ fields, onChange, onSetActive }) {
           options={fields.find((f) => f.id === editingOptionsId)?.options || []}
           onClose={() => setEditingOptionsId(null)}
           onSave={(opts) => {
-            update(editingOptionsId, { options: opts });
+            // update(editingOptionsId, { options: opts });
+            const f = fields.find((f) => f.id === editingOptionsId);
+
+            // Оновлюємо options і demo разом:
+            const newField = {
+              ...f,
+              options: opts,
+            };
+
+            if (
+              newField.demo === "" ||
+              (Array.isArray(opts) && !opts.includes(newField.demo))
+            ) {
+              newField.demo = opts?.[0] ?? "";
+            }
+
+            update(f.id, { options: opts, demo: newField.demo });
             setEditingOptionsId(null);
           }}
         />

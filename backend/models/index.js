@@ -8,6 +8,7 @@ db.sequelize = sequelize;
 db.User = require("./User"); // вже імпортує sequelize всередині себе
 db.Setting = require("./Setting")(sequelize, DataTypes);
 db.UserLog = require("./UserLog")(sequelize, DataTypes);
+db.Counter = require("./Counter")(sequelize, DataTypes);
 db.Template = require("./Template")(sequelize, DataTypes); // викликаємо
 
 db.TemplateLog = require("./TemplateLog")(sequelize, DataTypes);

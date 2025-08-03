@@ -91,7 +91,15 @@ export function getColumns({
           );
         }
 
-        if (f.type !== "select" && canChange && isEditing) {
+        if (
+          (f.type !== "select" &&
+            canChange &&
+            isEditing &&
+            !r.isDraft &&
+            f.label !== "Аналіз провів" &&
+            f.label !== "№ аналізу") ||
+          (r.isDraft && f.type !== "calc")
+        ) {
           return (
             <Input
               className="text-sm h-full"
@@ -195,21 +203,23 @@ export function getColumns({
               </Button>
             )}
 
-            <Button
-              size="sm"
-              disabled={!dirty || !canSave}
-              className={!dirty || !canSave ? "pointer-events-none" : ""}
-              onClick={() => {
-                saveRow({ ...r, isEditing: false });
-                setRows((arr) =>
-                  arr.map((x) =>
-                    x.id === r.id ? { ...x, isEditing: false } : x
-                  )
-                );
-              }}
-            >
-              💾
-            </Button>
+            {canSave && (
+              <Button
+                size="sm"
+                disabled={!dirty || !canSave}
+                className={!dirty || !canSave ? "pointer-events-none" : ""}
+                onClick={() => {
+                  saveRow({ ...r, isEditing: false });
+                  setRows((arr) =>
+                    arr.map((x) =>
+                      x.id === r.id ? { ...x, isEditing: false } : x
+                    )
+                  );
+                }}
+              >
+                💾
+              </Button>
+            )}
             {!r.isDraft && (
               <Button size="sm" variant="ghost" onClick={handleDownloadCert}>
                 📄

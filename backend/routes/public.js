@@ -159,6 +159,36 @@ router.post("/certificates", async (req, res) => {
       });
     };
 
+    const addPngWithRandomTransform = async (
+      filePath,
+      sizePx,
+      xPerc,
+      yPerc,
+      maxShift = 5,
+      maxRotateDeg = 20
+    ) => {
+      const img = await pdfDoc.embedPng(await fs.readFile(filePath));
+
+      const w = sizePx;
+      const h = sizePx * (img.height / img.width);
+
+      // Випадкові зміщення
+      const shiftX = (Math.random() * 2 - 1) * maxShift; // від -maxShift до +maxShift
+      const shiftY = (Math.random() * 2 - 1) * maxShift;
+
+      // Випадковий поворот (в радіанах)
+      const angleDeg = (Math.random() * 2 - 1) * maxRotateDeg;
+      const angleRad = (angleDeg * Math.PI) / 180;
+
+      page.drawImage(img, {
+        x: pctX(xPerc) + shiftX,
+        y: pctY(yPerc) + shiftY,
+        width: w,
+        height: h,
+        rotate: pdfLib.degrees(angleDeg),
+      });
+    };
+
     const stampField = tpl.fields.find(
       (f) => f.label === "Печатка" && f.render !== false
     );
@@ -176,7 +206,12 @@ router.post("/certificates", async (req, res) => {
       const stampP = path.join(DATA_DIR, "public", "stamp.png");
       try {
         await fs.access(stampP);
-        await addPng(stampP, stampField.size, stampField.x, stampField.y);
+        await addPngWithRandomTransform(
+          stampP,
+          stampField.size,
+          stampField.x,
+          stampField.y
+        );
       } catch {}
     }
 

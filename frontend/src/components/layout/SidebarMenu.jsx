@@ -56,7 +56,7 @@ export default function SidebarMenu({ onLogout, templates = [] }) {
             (x) => x.label === "Локація" && x.type === "selectOnce"
           );
           const id = Array.isArray(f?.options) ? f.options[0] : null;
-          return id === user.location;
+          return id?.toString() === user.locationId;
         })
       : templates;
 
@@ -233,7 +233,6 @@ export default function SidebarMenu({ onLogout, templates = [] }) {
               )}
             </li>
           )}
-
           {(roles.includes("constructor") || roles.includes("supervisor")) && (
             <li>
               <button
@@ -282,7 +281,6 @@ export default function SidebarMenu({ onLogout, templates = [] }) {
               )}
             </li>
           )}
-
           {roles.includes("supervisor") && (
             <li>
               <button
@@ -316,38 +314,39 @@ export default function SidebarMenu({ onLogout, templates = [] }) {
               )}
             </li>
           )}
-
-          <li>
-            <button
-              className={`${btnBase} px-3 py-2 rounded-sm bg-[var(--color-primary)] text-[var(--color-text)] hover:bg-[var(--color-hover)]`}
-              onClick={() => openOnly(open.settings ? null : "settings")}
-            >
-              Налаштування
-              {open.settings ? <ChevronDown /> : <ChevronRight />}
-            </button>
-            {open.settings && (
-              <ul className="">
-                <Link to="/settings-app">
-                  <li
-                    className={`py-2 pl-5 bg-[var(--color-primary)] text-[var(--color-text)] hover:bg-[var(--color-hover)] ${cls(
-                      isActive("/settings-app")
-                    )}`}
-                  >
-                    Налаштування системи
-                  </li>
-                </Link>
-                <Link to="/stamp">
-                  <li
-                    className={`py-2 pl-5 bg-[var(--color-primary)] text-[var(--color-text)] hover:bg-[var(--color-hover)] ${cls(
-                      isActive("/stamp")
-                    )}`}
-                  >
-                    Печатка
-                  </li>
-                </Link>
-              </ul>
-            )}
-          </li>
+          {roles.includes("supervisor") && (
+            <li>
+              <button
+                className={`${btnBase} px-3 py-2 rounded-sm bg-[var(--color-primary)] text-[var(--color-text)] hover:bg-[var(--color-hover)]`}
+                onClick={() => openOnly(open.settings ? null : "settings")}
+              >
+                Налаштування
+                {open.settings ? <ChevronDown /> : <ChevronRight />}
+              </button>
+              {open.settings && (
+                <ul className="">
+                  <Link to="/settings-app">
+                    <li
+                      className={`py-2 pl-5 bg-[var(--color-primary)] text-[var(--color-text)] hover:bg-[var(--color-hover)] ${cls(
+                        isActive("/settings-app")
+                      )}`}
+                    >
+                      Налаштування системи
+                    </li>
+                  </Link>
+                  <Link to="/stamp">
+                    <li
+                      className={`py-2 pl-5 bg-[var(--color-primary)] text-[var(--color-text)] hover:bg-[var(--color-hover)] ${cls(
+                        isActive("/stamp")
+                      )}`}
+                    >
+                      Печатка
+                    </li>
+                  </Link>
+                </ul>
+              )}
+            </li>
+          )}
         </ul>
       </div>
 

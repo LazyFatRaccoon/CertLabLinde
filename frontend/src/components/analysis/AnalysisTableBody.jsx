@@ -85,9 +85,9 @@ export default function AnalysisTableBody({ table, data }) {
                   >
                     {flexRender(h.column.columnDef.header, h.getContext())}
                     {h.column.getIsSorted() === "asc"
-                      ? " 🔼"
+                      ? " ▲"
                       : h.column.getIsSorted() === "desc"
-                      ? " 🔽"
+                      ? " ▼"
                       : ""}
                   </th>
                 ))}

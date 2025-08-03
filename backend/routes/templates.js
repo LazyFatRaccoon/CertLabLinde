@@ -168,7 +168,7 @@ router.put(
       if (!tpl) return res.status(404).json({ message: "Не знайдено" });
 
       const before = tpl.toJSON();
-      console.log("before", before);
+      //console.log("before", before);
       const beforeMeta = await extractMeta(before.fields);
 
       if (req.body.name !== undefined) tpl.name = req.body.name.trim();
@@ -181,7 +181,7 @@ router.put(
       await tpl.save();
 
       const after = tpl.toJSON();
-      console.log("after", after);
+      //console.log("after", after);
       const afterMeta = await extractMeta(after.fields);
 
       const changedFields = [];
@@ -203,7 +203,7 @@ router.put(
           changedFields.push(label);
         }
       }
-      console.log("Змінені поля:", changedFields);
+      //console.log("Змінені поля:", changedFields);
       await TemplateLog.create({
         templateId: tpl.id,
         editorId: req.user.id,
@@ -253,6 +253,21 @@ router.delete("/:id", authenticateToken, onlySupervisors, async (req, res) => {
         bgFile: tpl.bgFile,
       },
     });
+
+    if (tpl.bgFile) {
+      const bgPath = path.join(
+        process.env.DATA_DIR || path.join(__dirname, ".."),
+        tpl.bgFile.replace(/^\/?public\//, "public/")
+      );
+
+      fs.promises.unlink(bgPath).catch((err) => {
+        console.warn(
+          "⚠️ Не вдалося видалити файл шаблону:",
+          bgPath,
+          err.message
+        );
+      });
+    }
 
     await tpl.destroy();
     res.sendStatus(204);
