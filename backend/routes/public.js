@@ -127,7 +127,7 @@ router.post("/certificates", async (req, res) => {
 
       page.drawText(String(val), {
         x: pctX(f.x),
-        y: pctY(f.y) + (f.fontSize ?? 16) * 0.2, // трохи підняти, аби текст
+        y: pctY(f.y) + (f.fontSize ?? 16) * 0.45, // трохи підняти, аби текст
         size: fontSize,
         font,
         color: pdfLib.rgb(r, g, b),
