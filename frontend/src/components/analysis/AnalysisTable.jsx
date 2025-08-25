@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { api } from "@/api/axiosInstance";
 import { toast } from "react-toastify";
 import {
@@ -30,6 +30,9 @@ export default function AnalysisTable({
   const [sorting, setSorting] = useState([]);
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedRows, setSelectedRows] = useState([]);
+  const hasDraft = rows.some((r) => r.isDraft);
+
+  const lastDraftIdRef = useRef(null);
 
   const clearSelectedRows = () => {
     setSelectedRows([]);
@@ -56,7 +59,8 @@ export default function AnalysisTable({
         else if (f.label === "№ аналізу") blank[f.id] = String(number);
         else blank[f.id] = "";
       });
-
+    const newId = "_draft_" + Date.now();
+    lastDraftIdRef.current = newId;
     setRows((r) => [
       {
         id: "_draft_" + Date.now(),
@@ -151,6 +155,25 @@ export default function AnalysisTable({
     getPaginationRowModel: getPaginationRowModel(),
   });
 
+  useEffect(() => {
+    const draftId = lastDraftIdRef.current;
+    if (!draftId) return;
+
+    // дочекаймося DOM
+    requestAnimationFrame(() => {
+      // шукаємо ПЕРШЕ редаговане поле саме цієї чернетки
+      const el = document.querySelector(
+        `input[data-row-id="${draftId}"]:not([disabled]):not([readonly])`
+      );
+      if (el) {
+        el.focus();
+        el.select?.();
+        // одноразово — скинемо, щоб не намагатись фокуситись ще
+        lastDraftIdRef.current = null;
+      }
+    });
+  }, [rows]);
+
   useEffect(() => table.setPageSize(50), [table]);
 
   return (
@@ -164,6 +187,7 @@ export default function AnalysisTable({
         setGlobalFilter={setGlobalFilter}
         mayAdd={mayAdd}
         addDraft={addDraft}
+        hasDraft={hasDraft}
         periodParams={periodParams}
         setPeriodParams={setPeriodParams}
         selectionMode={selectionMode}

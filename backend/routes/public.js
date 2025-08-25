@@ -27,12 +27,23 @@ function toDDMMYYYY(raw) {
 // body = { product, date:"DD.MM.YYYY", batch }
 //--------------------------------------------------------------------
 router.post("/certificates", async (req, res) => {
-  const { templateName, date, batch } = req.body || {};
+  const { templateName, date, batch, searchFieldId } = req.body || {};
   console.log("▶️  Request body:", req.body);
 
   if (!templateName || !date || !batch) {
     return res.status(400).json({ message: "Неповні дані" });
   }
+
+  const getSearchField = (tpl) => {
+    if (!tpl?.fields) return null;
+    if (searchFieldId) {
+      const byId = tpl.fields.find((f) => f.id === searchFieldId);
+      if (byId) return byId;
+    }
+    const byFlag = tpl.fields.find((f) => f?.search_sign === true);
+    if (byFlag) return byFlag;
+    return tpl.fields.find((f) => f?.label === "Партія") || null; // фолбек
+  };
 
   try {
     //----------------------------------------------------------------
@@ -46,21 +57,32 @@ router.post("/certificates", async (req, res) => {
       order: [["createdAt", "DESC"]],
     });
 
+    const wantedDate = toDDMMYYYY(date);
+    const wantedBatch = String(batch).trim();
+
     let analysis = null;
 
     for (const a of analyses) {
-      if (!a.template || a.template.name !== templateName) continue;
+      const tpl = a.template;
+      if (!tpl || tpl.name !== templateName) continue;
 
-      const FIELD_ID = {};
-      a.template.fields.forEach((f) => (FIELD_ID[f.label] = f.id));
-      const d = a.data || {};
+      // дата береться з поля "Дата проведення аналізу"
+      const dateField = tpl.fields.find(
+        (f) => f.label === "Дата проведення аналізу"
+      );
+      if (!dateField) continue;
 
-      if (
-        d[FIELD_ID["Партія"]] === String(batch) &&
-        toDDMMYYYY(d[FIELD_ID["Дата проведення аналізу"]]) === toDDMMYYYY(date)
-      ) {
+      // поле для пошуку партії/коду — згідно search_sign
+      const searchField = getSearchField(tpl);
+      if (!searchField) continue;
+
+      const data = a.data || {};
+      const aDate = toDDMMYYYY(data[dateField.id]);
+      const aBatch = String(data[searchField.id] ?? "").trim();
+
+      if (aDate === wantedDate && aBatch === wantedBatch) {
         analysis = a;
-        break;
+        break; // перший (найновіший) збіг
       }
     }
 
@@ -105,7 +127,14 @@ router.post("/certificates", async (req, res) => {
       if (f.type === "img" || f.render === false) continue;
 
       const val = analysis.data?.[f.id];
-      if (!val) continue;
+
+      const displayVal = (() => {
+        const s = val == null ? "" : String(val).trim();
+        const suffix = f.add ? String(f.add).trim() : "";
+        return s ? (suffix ? `${s} ${suffix}` : s) : ""; // якщо s порожнє — нічого не малюємо
+      })();
+
+      if (!displayVal) continue;
 
       const hex = (f.color ?? "#000000").replace("#", "");
       const r = parseInt(hex.slice(0, 2), 16) / 255;
@@ -125,7 +154,7 @@ router.post("/certificates", async (req, res) => {
       const font = fontMap.get(fam)[weight] || fontMap.get(fam).regular;
       const fontSize = f.fontSize ?? 16;
 
-      page.drawText(String(val), {
+      page.drawText(String(displayVal), {
         x: pctX(f.x),
         y: pctY(f.y) + (f.fontSize ?? 16) * 0.45, // трохи підняти, аби текст
         size: fontSize,

@@ -30,8 +30,10 @@ export default function FieldTable({ fields, onChange, onSetActive }) {
     italic: false,
     underline: false,
     demo: "",
+    add: "",
     render: true,
     fixed: false,
+    search_sign: false,
     imageUrl: "",
     options: [],
     ...f,
@@ -44,6 +46,11 @@ export default function FieldTable({ fields, onChange, onSetActive }) {
 
   const toggle = (id, key) =>
     update(id, { [key]: !fields.find((f) => f.id === id)[key] });
+
+  const setExclusiveSearchSign = (targetId) =>
+    onChange(
+      fields.map((f) => withDefaults({ ...f, search_sign: f.id === targetId }))
+    );
 
   return (
     <>
@@ -83,7 +90,13 @@ export default function FieldTable({ fields, onChange, onSetActive }) {
                 demo
               </th>
               <th className=" border border-[var(--color-tableBorder)] w-20">
+                add
+              </th>
+              <th className=" border border-[var(--color-tableBorder)] w-20">
                 відобр.
+              </th>
+              <th className=" border border-[var(--color-tableBorder)] w-12">
+                №
               </th>
               <th className=" border border-[var(--color-tableBorder)]  w-6" />
             </tr>
@@ -131,6 +144,7 @@ export default function FieldTable({ fields, onChange, onSetActive }) {
                           <option value="select">select</option>
                           <option value="selectOnce">selectOnce</option>
                           <option value="calc">calc</option>
+                          <option value="calcValue">calcValue</option>
                           <option value="img">img</option>
                         </select>
                         {f.type === "select" && (
@@ -304,6 +318,14 @@ export default function FieldTable({ fields, onChange, onSetActive }) {
                     )}
                   </td>
                   <td className="border px-1">
+                    <Input
+                      autoComplete="off"
+                      value={f.add || ""}
+                      onChange={(e) => update(f.id, { add: e.target.value })}
+                      className="border-none"
+                    />
+                  </td>
+                  <td className="border px-1">
                     <input
                       type="checkbox"
                       checked={f.render !== false}
@@ -312,6 +334,15 @@ export default function FieldTable({ fields, onChange, onSetActive }) {
                       }
                     />
                   </td>
+                  <td className="border px-1">
+                    <input
+                      type="radio"
+                      name="search_sign"
+                      checked={Boolean(f.search_sign)}
+                      onChange={() => setExclusiveSearchSign(f.id)}
+                    />
+                  </td>
+
                   <td className="border px-1">
                     {!fixed && (
                       <Button

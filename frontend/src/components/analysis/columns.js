@@ -44,86 +44,105 @@ export function getColumns({
     },
   };
 
-  const fieldCols = tpl.fields
-    .filter((f) => f.type !== "img" && f.type !== "selectOnce")
-    .map((f) => ({
-      header: f.label,
-      id: `field_${f.id}`,
-      accessorFn: (row) => (row.type === "main" ? row.data?.[f.id] ?? "" : ""),
-      cell: ({ row, getValue }) => {
-        const r = row.original;
-        const val = getValue();
-        const isEditing = r.isEditing;
-        const disabled = r.isDeleted || (!r.isDraft && !canEdit);
-        const canChange = !disabled && (r.isDraft || canEdit);
+  // 1) Відбираємо лише відображувані поля-колонки
+  const visibleFields = tpl.fields.filter(
+    (f) => f.type !== "img" && f.type !== "selectOnce"
+  );
 
-        if (r.type === "log") {
-          if (f.label === "Дата проведення аналізу")
-            return new Date(r.createdAt).toLocaleString();
-          if (f.label === "Аналіз провів") return r.editor?.email ?? "—";
-          const before = r.diff?.before?.[f.id];
-          const after = r.diff?.after?.[f.id];
-          return before !== after ? `${before ?? "—"} → ${after ?? "—"}` : "";
-        }
+  // 2) Ділимо на fixed та інші
+  const fixedFields = visibleFields.filter((f) => f.fixed === true);
+  const otherFields = visibleFields.filter((f) => !f.fixed);
 
-        if (f.type === "select" && canChange && isEditing) {
-          return (
-            <Select
-              value={val}
-              onValueChange={(v) => {
-                setRows((arr) =>
-                  arr.map((x) =>
-                    x.id === r.id
-                      ? { ...x, data: { ...x.data, [f.id]: v }, isDirty: true }
-                      : x
-                  )
-                );
-              }}
-              className="text-sm h-full"
-            >
-              <SelectItem value="">—</SelectItem>
-              {(f.options || []).map((opt) => (
-                <SelectItem key={opt} value={opt}>
-                  {opt}
-                </SelectItem>
-              ))}
-            </Select>
-          );
-        }
+  // 3) Фабрика для колонки поля
+  const makeFieldCol = (f) => ({
+    header: f.label,
+    id: `field_${f.id}`,
+    accessorFn: (row) => (row.type === "main" ? row.data?.[f.id] ?? "" : ""),
+    cell: ({ row, getValue }) => {
+      const r = row.original;
+      const val = getValue();
+      const isEditing = r.isEditing;
+      const disabled = r.isDeleted || (!r.isDraft && !canEdit);
+      const canChange = !disabled && (r.isDraft || canEdit);
 
-        if (
-          (f.type !== "select" &&
-            canChange &&
-            isEditing &&
-            !r.isDraft &&
-            f.label !== "Аналіз провів" &&
-            f.label !== "№ аналізу") ||
-          (r.isDraft && f.type !== "calc")
-        ) {
-          return (
-            <Input
-              className="text-sm h-full"
-              value={val}
-              onChange={(e) => {
-                const v = e.target.value;
-                setRows((arr) =>
-                  arr.map((x) =>
-                    x.id === r.id
-                      ? { ...x, data: { ...x.data, [f.id]: v }, isDirty: true }
-                      : x
-                  )
-                );
-              }}
-            />
-          );
-        }
+      const fmt = (v) => {
+        const s = v == null ? "" : String(v);
+        if (!s) return s; // нічого не додаємо, якщо значення порожнє
+        return f.add ? `${s} ${f.add}` : s;
+      };
 
-        return <div className="flex items-center h-full">{val}</div>;
-      },
-    }));
+      if (r.type === "log") {
+        if (f.label === "Дата проведення аналізу")
+          return new Date(r.createdAt).toLocaleString();
+        if (f.label === "Аналіз провів") return r.editor?.email ?? "—";
+        const before = r.diff?.before?.[f.id];
+        const after = r.diff?.after?.[f.id];
+        return before !== after ? `${before ?? "—"} → ${after ?? "—"}` : "";
+      }
+
+      if (f.type === "select" && canChange && isEditing) {
+        return (
+          <Select
+            value={val}
+            onValueChange={(v) => {
+              setRows((arr) =>
+                arr.map((x) =>
+                  x.id === r.id
+                    ? { ...x, data: { ...x.data, [f.id]: v }, isDirty: true }
+                    : x
+                )
+              );
+            }}
+            className="text-sm h-full"
+          >
+            <SelectItem value="">—</SelectItem>
+            {(f.options || []).map((opt) => (
+              <SelectItem key={opt} value={opt}>
+                {opt}
+              </SelectItem>
+            ))}
+          </Select>
+        );
+      }
+
+      if (
+        (f.type !== "select" &&
+          canChange &&
+          isEditing &&
+          !r.isDraft &&
+          f.label !== "Аналіз провів" &&
+          f.label !== "№ аналізу") ||
+        (r.isDraft && f.type !== "calc")
+      ) {
+        return (
+          <Input
+            className="text-sm h-full"
+            value={val}
+            data-row-id={r.id}
+            data-field-id={f.id}
+            onChange={(e) => {
+              const v = e.target.value;
+              setRows((arr) =>
+                arr.map((x) =>
+                  x.id === r.id
+                    ? { ...x, data: { ...x.data, [f.id]: v }, isDirty: true }
+                    : x
+                )
+              );
+            }}
+          />
+        );
+      }
+
+      return <div className="flex items-center h-full">{fmt(val)}</div>;
+    },
+  });
+
+  const fixedCols = fixedFields.map(makeFieldCol);
+  const otherCols = [...otherFields].reverse().map(makeFieldCol);
 
   return [
-    ...(selectionMode ? [selectionColumn] : []),
+    //...(selectionMode ? [selectionColumn] : []),
     {
       header: "#",
       id: "rowIndex",
@@ -135,9 +154,17 @@ export function getColumns({
           : `${r.parentSort + 1}.${(r.logIndex ?? 0) + 1}`;
       },
     },
-    ...fieldCols,
+
+    // 1) (опційно) колонка вибору — одразу після "#"
+    ...(selectionMode ? [selectionColumn] : []),
+
+    // 2) усі fixed
+    ...fixedCols,
+
+    // 3) решта
+    ...otherCols,
     {
-      header: "",
+      header: "Дії",
       id: "actions",
       enableSorting: false,
       cell: ({ row }) => {
@@ -146,7 +173,9 @@ export function getColumns({
 
         const dirty = r.isDraft || r.isDirty;
         const canSave = (isLab && r.isDraft) || (isManager && dirty);
-        const batch = tpl.fields.find((f) => f.label === "Партія");
+        const batch = tpl.fields.find(
+          (f) => f.label === "Партія" || f.label === "Партія №"
+        );
         const date = tpl.fields.find(
           (f) => f.label === "Дата проведення аналізу"
         );

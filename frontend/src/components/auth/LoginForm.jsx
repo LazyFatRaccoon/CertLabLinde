@@ -6,6 +6,7 @@ import { tokenStore } from "../../api/tokenStore";
 import { API_URL } from "../../constants";
 import { SettingsContext } from "../../context/SettingsContext";
 import ForgotPasswordForm from "./ForgotPasswordForm"; // імпортуй компонент
+import { useImageReady } from "../../hooks/useImageReady";
 
 export default function LoginForm() {
   const { setSettings } = useContext(SettingsContext);
@@ -14,6 +15,9 @@ export default function LoginForm() {
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showForgot, setShowForgot] = useState(false); // 🔹 новий стан
+
+  const logoSrc = "/linde-logo-desktop.avif";
+  const ready = useImageReady(logoSrc);
 
   const navigate = useNavigate();
   useEffect(() => {
@@ -60,6 +64,15 @@ export default function LoginForm() {
       setError("Невірний email або пароль");
     }
   };
+
+  if (!ready) {
+    // лоадер, поки картинка не декодована
+    return (
+      <div className="min-h-screen grid place-items-center bg-white">
+        <div className="animate-pulse text-[#002d54]">Завантаження…</div>
+      </div>
+    );
+  }
 
   return (
     <>

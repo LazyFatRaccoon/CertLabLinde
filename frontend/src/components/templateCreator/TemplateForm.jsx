@@ -58,12 +58,13 @@ function createSystemFields(products, locations) {
 
     {
       id: crypto.randomUUID(),
-      label: "Партія",
+      label: "Партія №",
       type: "text",
       fixed: true,
       demo: "123-XYZ",
       x: 0,
       y: 0,
+      search_sign: true,
     },
     {
       id: crypto.randomUUID(),

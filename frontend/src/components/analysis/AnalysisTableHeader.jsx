@@ -4,6 +4,7 @@ import PeriodFilter from "./PeriodFilter";
 import { useState } from "react";
 import axios from "axios";
 import { FileCheck2, FileDown } from "lucide-react";
+import { useHotkeyToClickButton } from "../../hooks/useHotkeyToClickButton";
 
 export default function AnalysisTableHeader({
   tpl,
@@ -14,6 +15,7 @@ export default function AnalysisTableHeader({
   setGlobalFilter,
   mayAdd,
   addDraft,
+  hasDraft,
   periodParams,
   setPeriodParams,
   selectionMode,
@@ -22,6 +24,7 @@ export default function AnalysisTableHeader({
   clearSelectedRows,
 }) {
   const [actionStep, setActionStep] = useState(0);
+  useHotkeyToClickButton("Ctrl+`", "add-analysis-button");
 
   const handleCertZipClick = async () => {
     if (!selectionMode) {
@@ -78,7 +81,11 @@ export default function AnalysisTableHeader({
             )}
           </Button>
 
-          {mayAdd && <Button onClick={addDraft}>+ Додати аналіз</Button>}
+          {mayAdd && !hasDraft && (
+            <Button id="add-analysis-button" onClick={addDraft}>
+              + Додати аналіз
+            </Button>
+          )}
         </div>
       </div>
       <div className="flex gap-5 justify-between items-center mb-3">

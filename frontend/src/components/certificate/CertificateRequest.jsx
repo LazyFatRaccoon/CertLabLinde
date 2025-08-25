@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-toastify";
@@ -14,15 +14,46 @@ const todayUi = () =>
 export default function CertificateRequest() {
   const [allTemplates, setAllTemplates] = useState([]);
   const [templates, setTemplates] = useState([]);
+
   const [form, setForm] = useState({
     templateName: "",
     date: todayUi(),
     batch: "",
   });
+
+  const [templateQuery, setTemplateQuery] = useState(form.templateName || "");
+
+  const filteredTemplates = useMemo(() => {
+    const q = templateQuery.trim().toLowerCase();
+    if (!q) return templates;
+    return templates.filter((name) => name.toLowerCase().startsWith(q));
+  }, [templates, templateQuery]);
+
   const { setLoading } = useLoading();
   const [loading2, setLoading2] = useState(false);
   const navigate = useNavigate();
   const isLoggedIn = !!tokenStore.get();
+
+  // ⬅️ NEW: зберігаємо вибране "пошукове" поле
+  const [searchField, setSearchField] = useState(null);
+  const defaultBatchLabel = "№ Партії або номер продукції";
+
+  // зручно тримати швидкий доступ до вибраного шаблону
+  const selectedTemplate = useMemo(
+    () => allTemplates.find((t) => t.name === form.templateName) || null,
+    [allTemplates, form.templateName]
+  );
+
+  // ⬅️ NEW: допоміжна ф-ція пошуку поля з search_sign
+  const findSearchField = (tpl) => {
+    if (!tpl?.fields) return null;
+    // 1) пріоритет — search_sign === true
+    const byFlag = tpl.fields.find((f) => f?.search_sign === true);
+    if (byFlag) return byFlag;
+    // 2) fallback — поле "Партія" (як у чинній логіці бекенду)
+    const byLabel = tpl.fields.find((f) => f?.label === "Партія");
+    return byLabel || null;
+  };
 
   useEffect(() => {
     const fetchTemplates = async () => {
@@ -39,12 +70,18 @@ export default function CertificateRequest() {
             seen.add(t.name);
           }
         }
+        unique.sort((a, b) =>
+          a.localeCompare(b, "uk", { sensitivity: "base", numeric: true })
+        );
         setTemplates(unique);
 
         if (unique.length) {
-          setForm((prev) => ({ ...prev, templateName: unique[0] }));
+          const firstName = unique[0];
+          setForm((prev) => ({ ...prev, templateName: firstName }));
+          // ⬅️ NEW: відразу визначимо поле пошуку
+          const tpl = data.find((t) => t.name === firstName);
+          setSearchField(findSearchField(tpl));
         }
-        console.log("1");
       } catch (err) {
         toast.error("Не вдалося завантажити шаблони");
       } finally {
@@ -54,24 +91,34 @@ export default function CertificateRequest() {
     fetchTemplates();
   }, [setLoading]);
 
+  // ⬅️ NEW: реакція на зміну вибраного шаблону — оновити поле пошуку
+  useEffect(() => {
+    setSearchField(findSearchField(selectedTemplate));
+  }, [selectedTemplate]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.batch.trim()) return toast.error("Вкажіть партію");
+    if (!form.batch.trim()) return toast.error("Вкажіть значення для пошуку");
+
     setLoading(true);
     setLoading2(true);
     try {
-      const tpl = allTemplates.find((t) => t.name === form.templateName);
+      const tpl = selectedTemplate;
       if (!tpl) return toast.error("Шаблон не знайдено");
 
-      const { data } = await axios.post(
-        "/api/public/certificates",
-        {
-          templateName: tpl.name,
-          date: form.date,
-          batch: form.batch,
-        },
-        { responseType: "blob" }
-      );
+      // ⬅️ NEW: формуємо тіло запиту з підказкою бекенду, по якому полі шукати
+      const payload = {
+        templateName: tpl.name,
+        date: form.date,
+        batch: form.batch, // значення, яке ввів користувач
+        // ↓ підкажемо бекенду, яке саме поле використати як "batch"
+        searchFieldId: searchField?.id ?? null, // бек може за замовчуванням падати на "Партія", якщо null
+      };
+
+      const { data } = await axios.post("/api/public/certificates", payload, {
+        responseType: "blob",
+      });
+
       const url = URL.createObjectURL(
         new Blob([data], { type: "application/pdf" })
       );
@@ -108,26 +155,32 @@ export default function CertificateRequest() {
           />
         </div>
       </div>
+
       <div className="max-w-md m-20 mx-auto p-6 space-y-4  text-[var(--color-bg)] rounded ">
         <h1 className="text-2xl font-bold mb-2">Замовити сертифікат</h1>
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="template">Назва газу або рідини</label>
-            <select
-              id="template"
-              name="template"
+            <label htmlFor="template-input">Назва газу або рідини</label>
+            <input
+              id="template-input"
+              list="templates-list"
               className="w-full border p-2 rounded bg-[var(--color-bg2)] text-[var(--color-text2)] hover:border-[var(--color-primary)] transition-colors"
-              value={form.templateName}
-              onChange={(e) =>
-                setForm({ ...form, templateName: e.target.value })
-              }
-            >
-              {templates.map((name) => (
-                <option key={name} value={name}>
-                  {name}
-                </option>
+              value={templateQuery}
+              onChange={(e) => {
+                const name = e.target.value;
+                setTemplateQuery(name);
+                // одразу оновлюємо форму та очищаємо batch
+                setForm((prev) => ({ ...prev, templateName: name, batch: "" }));
+              }}
+              placeholder="Почніть вводити назву або оберіть із списку…"
+              autoComplete="off"
+            />
+            <datalist id="templates-list">
+              {filteredTemplates.map((name) => (
+                <option key={name} value={name} />
               ))}
-            </select>
+            </datalist>
           </div>
 
           <div>
@@ -142,15 +195,23 @@ export default function CertificateRequest() {
           </div>
 
           <div className="pb-4">
-            <label htmlFor="batchNumber">№ Партії або номер продукції</label>
+            {/* ⬅️ NEW: динамічний напис з поля пошуку */}
+            <label htmlFor="batchNumber">
+              {searchField?.label || defaultBatchLabel}
+            </label>
             <input
               id="batchNumber"
               name="batchNumber"
               className="w-full rounded border p-2 focus:border-[var(--color-primary)] focus:outline-none bg-[var(--color-bg2)] text-[var(--color-text2)] hover:border-[var(--color-primary)] transition-colors"
               autoComplete="off"
               value={form.batch}
+              placeholder={searchField?.placeholder || ""} // опційно
               onChange={(e) => setForm({ ...form, batch: e.target.value })}
             />
+            {/* Можна підказку показати: */}
+            {searchField?.hint && (
+              <div className="text-xs opacity-70 mt-1">{searchField.hint}</div>
+            )}
           </div>
 
           <Button disabled={loading2}>
