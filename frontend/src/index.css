@@ -35,20 +35,20 @@
   --color-tableDelete: #ffe3e3;
   --color-tableBorder: #e5e7eb;
 }
-
+/*002d54 005490 00345e*/
 .linde {
   --color-text: #ffffff;
   --color-text2: #000000;
-  --color-bg: #002d54;
+  --color-bg: #005490;
   --color-bg2: #ffffff;
-  --color-primary: #002d54;
+  --color-primary: #005490;
   --color-primary2: #005490;
-  --color-secondary: #002d54;
-  --color-hover: #00345e;
+  --color-secondary: #005490;
+  --color-hover: #002d54;
   --color-tableCreate: #dcfce7;
   --color-tableEdit: #fffac4;
   --color-tableDelete: #ffe3e3;
-  --color-tableBorder: #002d54;
+  --color-tableBorder: #005490;
 }
 /* ___крім___ полів вводу, textarea та contenteditable —
    там виділення має залишатись */
